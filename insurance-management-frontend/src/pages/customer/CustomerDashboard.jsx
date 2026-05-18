@@ -1,5 +1,4 @@
 import React from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { 
   Heart, 
   ShieldCheck, 
@@ -7,177 +6,250 @@ import {
   Sparkles,
   ArrowRight,
   Send,
-  MessageSquare
+  MessageSquare,
+  FileCheck,
+  AlertTriangle
 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import StatCard from '../../components/StatCard';
+import StatusBadge from '../../components/StatusBadge';
 
 const CustomerDashboard = () => {
-  const { user } = useAuth();
+  const actionButtons = (
+    <button className="btn btn-primary" style={{ height: '38px', gap: '6px' }}>
+      <Sparkles size={14} />
+      Ưu đãi thành viên
+    </button>
+  );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="glass-card" style={{
-        background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
-        border: '1px solid rgba(20, 184, 166, 0.2)',
-        padding: '32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '20px'
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }} className="saas-fade-in">
+      
+      {/* Page Header */}
+      <PageHeader 
+        title="Trang Cá Nhân Khách Hàng" 
+        description="Chào mừng bạn đến với Cổng bảo hiểm InsurePro. Dễ dàng xem hợp đồng hiện có, tạo báo cáo sự cố hoặc hỏi đáp trợ lý ảo."
+        actions={actionButtons}
+      />
+
+      {/* Stats Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '24px'
       }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '8px', color: 'white' }}>Chào mừng bạn, Khách hàng thân thiết! ❤️</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Chào mừng đến với cổng thông tin khách hàng Insure Pro. Dưới đây là các quyền lợi và thông tin bảo hiểm hiện tại của bạn.</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(255,255,255,0.05)',
-          padding: '8px 16px',
-          borderRadius: '9999px',
-          fontSize: '0.85rem',
-          border: '1px solid var(--glass-border)'
-        }}>
-          <Sparkles size={16} style={{ color: 'var(--accent)' }} />
-          <span>Tài khoản Đã kích hoạt</span>
-        </div>
+        <StatCard 
+          title="HỢP ĐỒNG ĐANG HOẠT ĐỘNG" 
+          value="1 Gói" 
+          icon={ShieldCheck} 
+          trend="Đang bảo vệ" 
+          trendType="up"
+          description="Gói An Sinh Toàn Diện"
+        />
+        <StatCard 
+          title="YÊU CẦU BỒI THƯỜNG" 
+          value="0" 
+          icon={AlertTriangle} 
+          trend="Không có sự cố" 
+          trendType="up"
+          description="Hồ sơ bồi thường sạch"
+        />
+        <StatCard 
+          title="NGÀY ĐÓNG PHÍ KẾ TIẾP" 
+          value="01/01/2027" 
+          icon={FileCheck} 
+          trend="Đã thanh toán" 
+          trendType="up"
+          description="Đóng phí hàng năm"
+        />
+        <StatCard 
+          title="TƯ VẤN VIÊN RIÊNG" 
+          value="Nguyễn Văn B" 
+          icon={MessageSquare} 
+          trend="Đang trực tuyến" 
+          trendType="up"
+          description="employee@insurance.com"
+        />
       </div>
 
-      {/* Grid of Main Details */}
+      {/* Main Details Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '32px'
+        gap: '28px'
       }}>
-        {/* Active Insurances */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={20} style={{ color: 'var(--accent)' }} />
-            Gói bảo hiểm đang tham gia
+        
+        {/* Active Policy Detail Card */}
+        <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <h3 style={{ 
+            fontSize: '1rem', 
+            fontWeight: '600', 
+            borderBottom: '1px solid var(--border)', 
+            paddingBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <ShieldCheck size={18} style={{ color: 'var(--primary)' }} />
+            Chi tiết Hợp đồng Bảo hiểm Active
           </h3>
+
           <div style={{
-            background: 'rgba(255,255,255,0.01)',
-            border: '1px solid rgba(20, 184, 166, 0.2)',
-            padding: '20px',
-            borderRadius: 'var(--radius-md)',
-            position: 'relative'
+            backgroundColor: 'var(--background)',
+            border: '1px solid var(--border)',
+            padding: '18px',
+            borderRadius: 'var(--radius-sm)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
               <div>
-                <span className="badge badge-customer" style={{ fontSize: '0.65rem' }}>ĐANG HOẠT ĐỘNG</span>
-                <h4 style={{ fontSize: '1.1rem', fontWeight: 'bold', marginTop: '8px', color: 'white' }}>An Sinh Toàn Diện Pro</h4>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mã hợp đồng: #HD-92810</p>
+                <StatusBadge status="ACTIVE" />
+                <h4 style={{ fontSize: '1rem', fontWeight: '700', marginTop: '8px', color: 'var(-- Saas-text-main, #0f172a)' }}>
+                  Gói An Sinh Toàn Diện Pro
+                </h4>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mã hợp đồng: #HD-92810</span>
               </div>
-              <Heart size={28} style={{ color: 'var(--accent)', fill: 'rgba(20, 184, 166, 0.1)' }} />
+              <Heart size={24} style={{ color: 'var(--danger)', fill: 'rgba(220, 38, 38, 0.05)' }} />
             </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              <span>Ngày bắt đầu: 01/01/2026</span>
-              <span>Hạn mức: 500,000,000đ</span>
+
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '8px', 
+              fontSize: '0.85rem', 
+              color: '#334155',
+              borderTop: '1px solid var(--border)',
+              paddingTop: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Ngày bắt đầu:</span>
+                <strong>01/01/2026</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Ngày đáo hạn:</span>
+                <strong>01/01/2027</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Hạn mức chi trả:</span>
+                <strong style={{ color: 'var(--primary)' }}>500,000,000đ</strong>
+              </div>
             </div>
           </div>
-          
-          <button className="btn btn-secondary" style={{ width: '100%', gap: '8px', fontSize: '0.85rem' }}>
-            Xem chi tiết hợp đồng
+
+          <button className="btn btn-secondary" style={{ width: '100%', gap: '8px', height: '38px' }}>
+            <span>Xem điều khoản & Điều kiện bảo hiểm</span>
             <ArrowRight size={14} />
           </button>
         </div>
 
-        {/* Advisor & Support */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <MessageSquare size={20} style={{ color: 'var(--primary)' }} />
-            Nhân viên hỗ trợ của bạn
+        {/* My Consultant Details */}
+        <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <h3 style={{ 
+            fontSize: '1rem', 
+            fontWeight: '600', 
+            borderBottom: '1px solid var(--border)', 
+            paddingBottom: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <MessageSquare size={18} style={{ color: 'var(--warning)' }} />
+            Tư vấn viên Chăm sóc của bạn
           </h3>
-          
+
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '16px',
-            background: 'rgba(255,255,255,0.02)',
+            backgroundColor: 'var(--background)',
             padding: '16px',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--glass-border)'
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border)'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--primary)',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontWeight: 'bold',
-              fontSize: '1.2rem'
+              fontWeight: '700',
+              fontSize: '1rem'
             }}>
-              E
+              NVB
             </div>
             <div>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 'bold' }}>Nguyễn Văn B (Staff)</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>employee@insurance.com</p>
-              <span className="badge badge-employee" style={{ fontSize: '0.6rem', padding: '2px 6px', marginTop: '4px' }}>TƯ VẤN VIÊN RIÊNG</span>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '750', color: 'var(--text-main)' }}>Nguyễn Văn B (Staff)</h4>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>employee@insurance.com</p>
+              <div style={{ marginTop: '4px' }}>
+                <StatusBadge status="ROLE_EMPLOYEE" />
+              </div>
             </div>
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-            Nhân viên tư vấn riêng của bạn chịu trách nhiệm hỗ trợ duyệt hồ sơ và hướng dẫn bạn bồi thường bảo hiểm khi xảy ra sự cố.
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+            Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.
           </p>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn btn-primary" style={{ flexGrow: 1, gap: '8px', fontSize: '0.85rem' }}>
-              <Send size={14} />
-              Gửi tin nhắn tư vấn
-            </button>
-          </div>
+          <button className="btn btn-primary" style={{ width: '100%', gap: '8px', height: '38px' }}>
+            <Send size={14} />
+            <span>Gửi tin nhắn hỗ trợ trực tiếp</span>
+          </button>
         </div>
       </div>
 
-      {/* Action shortcuts */}
-      <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>Bạn cần làm gì hôm nay?</h3>
+      {/* Quick shortcuts row */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>Bạn muốn thực hiện thao tác nào?</h3>
+        
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
           gap: '20px'
         }}>
           {[
-            { title: "Khai báo tai nạn / Sự cố bảo hiểm", desc: "Tạo báo cáo sự cố để yêu cầu chi trả bồi thường viện phí, tai nạn.", icon: AlertTriangle, color: "var(--danger)" },
-            { title: "Khám phá các gói bảo hiểm mới", desc: "Tìm hiểu thêm các gói bảo hiểm sức khỏe, tài sản, nhân thọ đang active.", icon: Heart, color: "var(--primary)" },
-            { title: "Hỏi trợ lý ảo chatbot AI", desc: "Tra cứu điều khoản bảo hiểm, chính sách bồi thường nhanh chóng 24/7.", icon: HelpCircle, color: "var(--accent)" }
-          ].map((item, idx) => {
-            const Icon = item.icon;
+            { title: "Khai báo tai nạn / Yêu cầu bồi thường", desc: "Tạo phiếu báo cáo sự cố (ảnh hiện trường, hóa đơn viện phí) để yêu cầu chi trả bồi thường bảo hiểm nhanh chóng.", icon: AlertTriangle, color: "var(--danger)" },
+            { title: "Mua gói bảo hiểm mới trực tuyến", desc: "Khám phá danh sách các gói bảo hiểm sức khỏe, xe máy, tài sản đang active với quy trình duyệt tự động.", icon: Heart, color: "var(--primary)" },
+            { title: "Trò chuyện với chatbot tư vấn AI", desc: "Đặt câu hỏi trực tiếp cho trợ lý ảo về quy chế bồi thường, điều khoản miễn trừ trách nhiệm của hợp đồng.", icon: HelpCircle, color: "var(--info)" }
+          ].map((action, idx) => {
+            const Icon = action.icon;
             return (
-              <div key={idx} className="glass-card" style={{
+              <div key={idx} className="saas-card saas-card-hover" style={{
                 padding: '20px',
-                borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px',
-                background: 'rgba(255,255,255,0.01)',
                 cursor: 'pointer',
-                transition: 'var(--transition-smooth)'
+                backgroundColor: '#ffffff'
               }}>
                 <div style={{
-                  color: item.color,
-                  background: 'rgba(255,255,255,0.02)',
+                  color: action.color,
+                  backgroundColor: 'var(--background)',
+                  border: '1px solid var(--border)',
                   width: '36px',
                   height: '36px',
-                  borderRadius: '10px',
+                  borderRadius: '6px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid var(--glass-border)'
+                  justifyContent: 'center'
                 }}>
-                  <Icon size={18} />
+                  <Icon size={16} />
                 </div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white' }}>{item.title}</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', flexGrow: 1 }}>{item.desc}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: item.color, fontWeight: 'bold', marginTop: '8px' }}>
-                  <span>Thực hiện ngay</span>
-                  <ArrowRight size={14} />
+                <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-main)' }}>{action.title}</h4>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexGrow: 1 }}>{action.desc}</p>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  color: 'var(--primary)',
+                  marginTop: '8px'
+                }}>
+                  <span>Bắt đầu thực hiện</span>
+                  <ArrowRight size={12} />
                 </div>
               </div>
             );

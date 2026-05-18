@@ -1,171 +1,209 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from 'react';
 import { 
   Users, 
-  Shield, 
   FileText, 
+  UserCheck, 
   Activity, 
   PlusCircle, 
-  ArrowRight,
-  TrendingUp
+  Settings, 
+  RefreshCw,
+  Search
 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import StatCard from '../../components/StatCard';
+import DataTable from '../../components/DataTable';
+import StatusBadge from '../../components/StatusBadge';
+import SearchFilterBar from '../../components/SearchFilterBar';
+
+// Recharts imports
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip 
+} from 'recharts';
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState('ALL');
 
-  const stats = [
-    { label: 'Tổng số tài khoản', value: '24', icon: Users, color: 'var(--primary)', desc: '+3 đăng ký mới tuần này' },
-    { label: 'Gói bảo hiểm ACTIVE', value: '6', icon: FileText, color: 'var(--secondary)', desc: '2 gói bảo hiểm đặc biệt' },
-    { label: 'Đã phân công', value: '18', icon: Shield, color: 'var(--accent)', desc: '98% khách hàng được chăm sóc' },
-    { label: 'Yêu cầu sự cố PENDING', value: '3', icon: Activity, color: 'var(--danger)', desc: 'Cần giải quyết ngay' },
+  // Simulated chart data
+  const chartData = [
+    { name: 'T1', subscriptions: 12, revenue: 120000000 },
+    { name: 'T2', subscriptions: 19, revenue: 185000000 },
+    { name: 'T3', subscriptions: 15, revenue: 150000000 },
+    { name: 'T4', subscriptions: 28, revenue: 260000000 },
+    { name: 'T5', subscriptions: 34, revenue: 320000000 },
+    { name: 'T6', subscriptions: 45, revenue: 410000000 },
   ];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="glass-card" style={{
-        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
-        border: '1px solid rgba(99, 102, 241, 0.2)',
-        padding: '32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '20px'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '8px', color: 'white' }}>Xin chào, Quản trị viên! 👋</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Chào mừng trở lại bảng điều khiển Admin. Dưới đây là thông số vận hành tổng quan hệ thống hôm nay.</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(255,255,255,0.05)',
-          padding: '8px 16px',
-          borderRadius: '9999px',
-          fontSize: '0.85rem',
-          border: '1px solid var(--glass-border)'
-        }}>
-          <TrendingUp size={16} style={{ color: 'var(--accent)' }} />
-          <span>Hệ thống hoạt động bình thường</span>
-        </div>
-      </div>
+  // Simulated audit logs
+  const allLogs = [
+    { id: 1, action: 'Tạo gói bảo hiểm "Gia Đình An Vui"', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '10 phút trước', status: 'SUCCESS' },
+    { id: 2, action: 'Đăng ký tài khoản khách hàng mới', user: 'customer@insurance.com', role: 'ROLE_CUSTOMER', time: '25 phút trước', status: 'SUCCESS' },
+    { id: 3, action: 'Phân công khách hàng cho nhân viên', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '1 giờ trước', status: 'SUCCESS' },
+    { id: 4, action: 'Cập nhật trạng thái sự cố #SR-409', user: 'employee@insurance.com', role: 'ROLE_EMPLOYEE', time: '2 giờ trước', status: 'WARNING' },
+    { id: 5, action: 'Thử nghiệm truy cập API trái phép', user: 'unknown@test.com', role: 'UNKNOWN', time: '4 giờ trước', status: 'DANGER' },
+    { id: 6, action: 'Thay đổi cấu hình hệ thống bảo mật', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '1 ngày trước', status: 'SUCCESS' },
+  ];
 
-      {/* Stats Grid */}
+  // Filter & Search logic
+  const filteredLogs = allLogs.filter(log => {
+    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          log.user.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterRole === 'ALL' || log.role === filterRole;
+    return matchesSearch && matchesFilter;
+  });
+
+  const headers = [
+    { label: 'Hành động nghiệp vụ', key: 'action' },
+    { label: 'Tài khoản', key: 'user' },
+    { label: 'Thời gian', key: 'time' },
+    { label: 'Trạng thái', key: 'status', width: '120px' }
+  ];
+
+  // Custom table cell renderer
+  const renderCell = (row, key, value) => {
+    if (key === 'status') {
+      return <StatusBadge status={value} />;
+    }
+    if (key === 'user') {
+      return <span style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{value}</span>;
+    }
+    if (key === 'action') {
+      return <strong style={{ color: 'var(--text-main)' }}>{value}</strong>;
+    }
+    return value;
+  };
+
+  const actionButtons = (
+    <>
+      <button className="btn btn-secondary" style={{ height: '38px', gap: '6px' }}>
+        <RefreshCw size={14} />
+        Làm mới dữ liệu
+      </button>
+      <button className="btn btn-primary" style={{ height: '38px', gap: '6px' }}>
+        <PlusCircle size={16} />
+        Gói Bảo Hiểm Mới
+      </button>
+    </>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }} className="animate-fade-in">
+      
+      {/* Page Header */}
+      <PageHeader 
+        title="Dashboard Tổng Quan" 
+        description="Chào mừng bạn đến với Cổng quản trị doanh nghiệp InsurePro. Theo dõi số liệu vận hành và hệ thống bảo hiểm."
+        actions={actionButtons}
+      />
+
+      {/* KPI Stats Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '24px'
       }}>
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div key={idx} className="glass-card" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              {/* Glow background */}
-              <div style={{
-                position: 'absolute',
-                top: '-20px',
-                right: '-20px',
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                background: stat.color,
-                filter: 'blur(40px)',
-                opacity: 0.15,
-                pointerEvents: 'none'
-              }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{stat.label}</span>
-                <div style={{
-                  background: `rgba(255,255,255,0.03)`,
-                  border: '1px solid var(--glass-border)',
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: stat.color
-                }}>
-                  <Icon size={20} />
-                </div>
-              </div>
-
-              <div>
-                <h3 style={{ fontSize: '2.2rem', fontWeight: '800', lineHeight: 1 }}>{stat.value}</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>{stat.desc}</p>
-              </div>
-            </div>
-          );
-        })}
+        <StatCard 
+          title="TỔNG SỐ TÀI KHOẢN" 
+          value="24" 
+          icon={Users} 
+          trend="+12% tháng này" 
+          trendType="up"
+          description="Đang hoạt động tốt"
+        />
+        <StatCard 
+          title="GÓI BẢO HIỂM ACTIVE" 
+          value="6" 
+          icon={FileText} 
+          trend="Đạt chuẩn MVP"
+          trendType="up"
+          description="Khách hàng có thể mua"
+        />
+        <StatCard 
+          title="PHÂN CÔNG PHỤ TRÁCH" 
+          value="18" 
+          icon={UserCheck} 
+          trend="+3 mới gán" 
+          trendType="up"
+          description="Phục vụ khách hàng tốt"
+        />
+        <StatCard 
+          title="YÊU CẦU SỰ CỐ PENDING" 
+          value="3" 
+          icon={Activity} 
+          trend="-25% thời gian xử lý" 
+          trendType="down"
+          description="Cần nhân viên xử lý ngay"
+        />
       </div>
 
-      {/* Quick Actions & Recent Logs */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '32px'
-      }}>
-        {/* Actions Card */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>Thao tác nhanh</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button className="btn btn-primary" style={{ justifyContent: 'space-between', padding: '16px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <PlusCircle size={18} />
-                Tạo Gói Bảo Hiểm Mới
-              </span>
-              <ArrowRight size={16} />
-            </button>
-
-            <button className="btn btn-secondary" style={{ justifyContent: 'space-between', padding: '16px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Users size={18} style={{ color: 'var(--primary)' }} />
-                Phân công Khách hàng cho Nhân viên
-              </span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
+      {/* Analytics Chart Block */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Xu Hướng Đăng Ký Bảo Hiểm</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Biểu đồ thống kê số lượt đăng ký mua bảo hiểm mới 6 tháng gần nhất.</p>
         </div>
 
-        {/* Audit Log Card */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>Nhật ký hệ thống gần đây</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { text: "Admin đã tạo gói bảo hiểm 'Gia Đình An Vui'", time: "5 phút trước", status: "success" },
-              { text: "Khách hàng customer@insurance.com đã đăng nhập", time: "12 phút trước", status: "info" },
-              { text: "Nhân viên employee@insurance.com cập nhật sự cố #SR-409", time: "1 giờ trước", status: "warning" },
-            ].map((log, i) => (
-              <div key={i} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: '0.85rem',
-                borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.02)' : 'none',
-                paddingBottom: i < 2 ? '12px' : '0'
-              }}>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <div style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: log.status === 'success' ? 'var(--success)' : log.status === 'info' ? 'var(--info)' : 'var(--warning)'
-                  }} />
-                  <span style={{ color: 'var(--text-primary)' }}>{log.text}</span>
-                </div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{log.time}</span>
-              </div>
-            ))}
-          </div>
+        <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorSub" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.01}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} />
+              <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'var(--card)', 
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+              />
+              <Area type="monotone" dataKey="subscriptions" stroke="var(--primary)" strokeWidth={2} fillOpacity={1} fill="url(#colorSub)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Logs Table Section */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Nhật Ký Hoạt Động Hệ Thống</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Xem lịch sử các thao tác thay đổi quyền hạn và quản lý của người dùng.</p>
+        </div>
+
+        {/* Filter controls */}
+        <SearchFilterBar 
+          searchPlaceholder="Tìm kiếm hành động hoặc tài khoản..."
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterValue={filterRole}
+          onFilterChange={setFilterRole}
+          filterOptions={[
+            { value: 'ALL', label: 'Tất cả các Role' },
+            { value: 'ROLE_ADMIN', label: 'Admin' },
+            { value: 'ROLE_EMPLOYEE', label: 'Nhân viên' },
+            { value: 'ROLE_CUSTOMER', label: 'Khách hàng' }
+          ]}
+        />
+
+        {/* Table Component */}
+        <DataTable 
+          headers={headers} 
+          data={filteredLogs} 
+          rowsPerPage={4}
+          renderCell={renderCell}
+        />
       </div>
     </div>
   );

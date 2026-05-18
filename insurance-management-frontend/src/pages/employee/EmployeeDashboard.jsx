@@ -1,176 +1,202 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Users, 
   AlertTriangle, 
   CheckCircle, 
   Calendar,
-  ChevronRight,
-  TrendingUp
+  RefreshCw,
+  Clock,
+  Search
 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import StatCard from '../../components/StatCard';
+import DataTable from '../../components/DataTable';
+import StatusBadge from '../../components/StatusBadge';
+import SearchFilterBar from '../../components/SearchFilterBar';
+
+// Recharts imports
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend 
+} from 'recharts';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPackage, setFilterPackage] = useState('ALL');
 
-  const stats = [
-    { label: 'Khách hàng phụ trách', value: '8', icon: Users, color: 'var(--info)', desc: '2 khách hàng mới tuần này' },
-    { label: 'Sự cố cần xử lý', value: '2', icon: AlertTriangle, color: 'var(--warning)', desc: '1 yêu cầu bồi thường khẩn cấp' },
-    { label: 'Đã giải quyết tháng này', value: '14', icon: CheckCircle, color: 'var(--success)', desc: 'Tỷ lệ hài lòng 96%' },
-    { label: 'Lịch hẹn tư vấn', value: '3', icon: Calendar, color: 'var(--primary)', desc: 'Hôm nay có 1 lịch hẹn' },
+  // Simulated chart data (Incidents processed)
+  const incidentStats = [
+    { name: 'Thứ 2', resolved: 4, processing: 2, pending: 1 },
+    { name: 'Thứ 3', resolved: 6, processing: 3, pending: 0 },
+    { name: 'Thứ 4', resolved: 5, processing: 1, pending: 2 },
+    { name: 'Thứ 5', resolved: 8, processing: 2, pending: 1 },
+    { name: 'Thứ 6', resolved: 7, processing: 4, pending: 0 },
+    { name: 'Thứ 7', resolved: 3, processing: 1, pending: 1 },
   ];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }} className="animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="glass-card" style={{
-        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%)',
-        border: '1px solid rgba(59, 130, 246, 0.2)',
-        padding: '32px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '20px'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '8px', color: 'white' }}>Xin chào, {user?.email.split('@')[0]}! 👋</h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Chào mừng trở lại cổng thông tin Nhân Viên. Hãy kiểm tra các yêu cầu sự cố và khách hàng mới cần hỗ trợ hôm nay.</p>
-        </div>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          background: 'rgba(255,255,255,0.05)',
-          padding: '8px 16px',
-          borderRadius: '9999px',
-          fontSize: '0.85rem',
-          border: '1px solid var(--glass-border)'
-        }}>
-          <TrendingUp size={16} style={{ color: 'var(--success)' }} />
-          <span>Hoàn thành 88% KPI tháng</span>
-        </div>
-      </div>
+  // Assigned customers data
+  const allCustomers = [
+    { id: 1, name: 'Nguyễn Văn A', email: 'customer@insurance.com', package: 'An Sinh Toàn Diện Pro', date: '01/01/2026', status: 'ACTIVE' },
+    { id: 2, name: 'Trần Thị B', email: 'tranthib@gmail.com', package: 'Sức Khỏe Vàng', date: '12/01/2026', status: 'ACTIVE' },
+    { id: 3, name: 'Phạm Văn C', email: 'phamvanc@gmail.com', package: 'Bảo Hiểm Xe Máy', date: '04/02/2026', status: 'PROCESSING' },
+    { id: 4, name: 'Lê Hoàng D', email: 'lehoangd@gmail.com', package: 'An Sinh Toàn Diện Pro', date: '19/02/2026', status: 'ACTIVE' },
+    { id: 5, name: 'Đặng Minh E', email: 'dangminhe@gmail.com', package: 'Chưa tham gia', date: 'Chưa thiết lập', status: 'PENDING' },
+  ];
 
-      {/* Stats Grid */}
+  // Filter & Search logic
+  const filteredCustomers = allCustomers.filter(cust => {
+    const matchesSearch = cust.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          cust.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterPackage === 'ALL' || cust.package === filterPackage;
+    return matchesSearch && matchesFilter;
+  });
+
+  const headers = [
+    { label: 'Tên Khách Hàng', key: 'name' },
+    { label: 'Email', key: 'email' },
+    { label: 'Gói Bảo Hiểm Tham Gia', key: 'package' },
+    { label: 'Ngày Bắt Đầu', key: 'date' },
+    { label: 'Trạng Thái', key: 'SaasStatusBadge', width: '120px' }
+  ];
+
+  const renderCell = (row, key, value) => {
+    if (key === 'SaasStatusBadge') {
+      return <StatusBadge status={row.status} />;
+    }
+    if (key === 'email') {
+      return <span style={{ color: 'var(--text-muted)' }}>{value}</span>;
+    }
+    if (key === 'name') {
+      return <strong style={{ color: 'var(--text-main)' }}>{value}</strong>;
+    }
+    return value;
+  };
+
+  const actionButtons = (
+    <button className="btn btn-secondary" style={{ height: '38px', gap: '6px' }}>
+      <RefreshCw size={14} />
+      Làm mới công việc
+    </button>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }} className="saas-fade-in">
+      
+      {/* Page Header */}
+      <PageHeader 
+        title={`Cổng Tư Vấn Viên: ${user?.email.split('@')[0]}`} 
+        description="Quản lý hồ sơ sự cố bảo hiểm, cập nhật tiến độ bồi thường và theo dõi danh sách khách hàng được phân công."
+        actions={actionButtons}
+      />
+
+      {/* KPI Stats Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '24px'
       }}>
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <div key={idx} className="glass-card" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              {/* Glow background */}
-              <div style={{
-                position: 'absolute',
-                top: '-20px',
-                right: '-20px',
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                background: stat.color,
-                filter: 'blur(40px)',
-                opacity: 0.15,
-                pointerEvents: 'none'
-              }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>{stat.label}</span>
-                <div style={{
-                  background: `rgba(255,255,255,0.03)`,
-                  border: '1px solid var(--glass-border)',
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: stat.color
-                }}>
-                  <Icon size={20} />
-                </div>
-              </div>
-
-              <div>
-                <h3 style={{ fontSize: '2.2rem', fontWeight: '800', lineHeight: 1 }}>{stat.value}</h3>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>{stat.desc}</p>
-              </div>
-            </div>
-          );
-        })}
+        <StatCard 
+          title="KHÁCH HÀNG PHỤ TRÁCH" 
+          value="8" 
+          icon={Users} 
+          trend="+2 trong tháng" 
+          trendType="up"
+          description="Được phân công trực tiếp"
+        />
+        <StatCard 
+          title="SỰ CỐ CẦN XỬ LÝ" 
+          value="2" 
+          icon={AlertTriangle} 
+          trend="1 hồ sơ khẩn cấp" 
+          trendType="down"
+          description="Cần duyệt giấy tờ"
+        />
+        <StatCard 
+          title="ĐÃ GIẢI QUYẾT" 
+          value="14" 
+          icon={CheckCircle} 
+          trend="Đạt 96% mục tiêu" 
+          trendType="up"
+          description="Hoàn tất chi trả"
+        />
+        <StatCard 
+          title="LỊCH HẸN TƯ VẤN" 
+          value="3" 
+          icon={Calendar} 
+          trend="Hôm nay có 1 lịch" 
+          trendType="up"
+          description="Trực tuyến qua Google Meet"
+        />
       </div>
 
-      {/* Task Queue & Customer Reminders */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '32px'
-      }}>
-        {/* Task Queue */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>Công việc cần làm ngay</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { title: "Duyệt yêu cầu bồi thường tai nạn xe máy", code: "#SR-9810", type: "Urgent" },
-              { title: "Liên hệ tư vấn gói bảo hiểm Gia Đình An Vui", code: "#C-2819", type: "Normal" },
-              { title: "Yêu cầu bổ sung chứng từ viện phí", code: "#SR-9755", type: "Action Needed" }
-            ].map((task, idx) => (
-              <div key={idx} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: 'rgba(255,255,255,0.01)',
-                border: '1px solid var(--glass-border)',
-                padding: '16px',
-                borderRadius: 'var(--radius-md)'
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{task.code}</span>
-                  <p style={{ fontSize: '0.9rem', fontWeight: '600', color: 'white', marginTop: '2px' }}>{task.title}</p>
-                </div>
-                <span className="badge" style={{
-                  fontSize: '0.7rem',
-                  background: task.type === 'Urgent' ? 'rgba(239, 68, 68, 0.15)' : task.type === 'Normal' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                  color: task.type === 'Urgent' ? 'var(--danger)' : task.type === 'Normal' ? 'var(--info)' : 'var(--warning)',
-                  border: `1px solid ${task.type === 'Urgent' ? 'rgba(239,68,68,0.25)' : task.type === 'Normal' ? 'rgba(59,130,246,0.25)' : 'rgba(245,158,11,0.25)'}`
-                }}>{task.type}</span>
-              </div>
-            ))}
-          </div>
+      {/* Recharts Bar Chart Block */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Hiệu Suất Giải Quyết Hồ Sơ</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Thống kê số lượng hồ sơ sự cố (Duyệt bồi thường, Đang xử lý, Chờ duyệt) trong tuần qua.</p>
         </div>
 
-        {/* Assigned Customers */}
-        <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <h3 style={{ fontSize: '1.25rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px' }}>Khách hàng chăm sóc gần đây</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { name: "Nguyễn Văn A", email: "customer@insurance.com", packages: "Gói An Sinh Toàn Diện" },
-              { name: "Trần Thị B", email: "tranthib@gmail.com", packages: "Gói Sức Khỏe Vàng" },
-              { name: "Phạm Văn C", email: "phamvanc@gmail.com", packages: "Chưa tham gia gói" }
-            ].map((cust, idx) => (
-              <div key={idx} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px 0',
-                borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.02)' : 'none'
-              }}>
-                <div>
-                  <p style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{cust.name}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{cust.email}</p>
-                </div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{cust.packages}</span>
-              </div>
-            ))}
-          </div>
+        <div style={{ width: '100%', height: 280 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={incidentStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--saas-border, #e2e8f0)" />
+              <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} tickLine={false} />
+              <YAxis stroke="var(--text-muted)" fontSize={12} tickLine={false} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'var(--card)', 
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+              />
+              <Legend verticalAlign="top" height={36} fontSize={12} />
+              <Bar dataKey="resolved" name="Đã duyệt" fill="var(--success)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="processing" name="Đang xử lý" fill="var(--info)" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="pending" name="Chờ duyệt" fill="var(--warning)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* Customers List Section */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Danh Sách Khách Hàng Được Gán</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Tìm kiếm thông tin liên hệ và trạng thái hoạt động của những khách hàng bạn phụ trách.</p>
+        </div>
+
+        {/* Filter row */}
+        <SearchFilterBar 
+          searchPlaceholder="Tìm kiếm tên khách hàng hoặc email..."
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          filterValue={filterPackage}
+          onFilterChange={setFilterPackage}
+          filterOptions={[
+            { value: 'ALL', label: 'Tất cả các Gói' },
+            { value: 'An Sinh Toàn Diện Pro', label: 'An Sinh Toàn Diện' },
+            { value: 'Sức Khỏe Vàng', label: 'Sức Khỏe Vàng' },
+            { value: 'Bảo Hiểm Xe Máy', label: 'Bảo Hiểm Xe Máy' },
+            { value: 'Chưa tham gia', label: 'Chưa tham gia gói' }
+          ]}
+        />
+
+        {/* DataTable */}
+        <DataTable 
+          headers={headers} 
+          data={filteredCustomers} 
+          rowsPerPage={4}
+          renderCell={renderCell}
+        />
       </div>
     </div>
   );
