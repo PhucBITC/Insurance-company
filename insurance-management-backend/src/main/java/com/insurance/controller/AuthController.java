@@ -2,6 +2,13 @@ package com.insurance.controller;
 
 import com.insurance.dto.JwtResponseDto;
 import com.insurance.dto.LoginRequestDto;
+import com.insurance.dto.SignupRequestDto;
+import com.insurance.dto.MessageResponse;
+import com.insurance.entity.ERole;
+import com.insurance.entity.Role;
+import com.insurance.entity.User;
+import com.insurance.repository.RoleRepository;
+import com.insurance.repository.UserRepository;
 import com.insurance.security.JwtTokenProvider;
 import com.insurance.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -12,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -23,11 +31,19 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequest) {
-
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
@@ -44,5 +60,28 @@ public class AuthController {
                 userDetails.getId(),
                 userDetails.getUsername(),
                 role));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequestDto signUpRequest) {
+        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(new MessageResponse("Lỗi: Email này đã được sử dụng!"));
+        }
+
+        // Create new user's account
+        User user = new User();
+        user.setEmail(signUpRequest.getEmail());
+        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+
+        // Default role is ROLE_CUSTOMER
+        Role userRole = roleRepository.findByName(ERole.ROLE_CUSTOMER)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Vai trò ROLE_CUSTOMER không tồn tại trên hệ thống."));
+        user.setRole(userRole);
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok(new MessageResponse("Đăng ký tài khoản thành công!"));
     }
 }

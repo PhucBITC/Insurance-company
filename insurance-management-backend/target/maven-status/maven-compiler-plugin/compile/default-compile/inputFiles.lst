@@ -3,6 +3,8 @@ D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\controller\TestController.java
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\dto\JwtResponseDto.java
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\dto\LoginRequestDto.java
+D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\dto\MessageResponse.java
+D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\dto\SignupRequestDto.java
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\entity\ERole.java
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\entity\Role.java
 D:\Java Project\Insurance company\insurance-management-backend\src\main\java\com\insurance\entity\User.java

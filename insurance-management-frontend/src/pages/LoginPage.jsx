@@ -145,6 +145,32 @@ const LoginPage = () => {
           </button>
         </form>
 
+        {/* Register navigation link */}
+        <div style={{
+          marginTop: '20px',
+          textAlign: 'center',
+          fontSize: '0.875rem',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          <span style={{ color: 'var(--text-muted)' }}>Chưa có tài khoản?</span>
+          <button
+            onClick={() => navigate('/register')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--primary)',
+              cursor: 'pointer',
+              fontWeight: '600',
+              padding: 0
+            }}
+          >
+            Đăng ký ngay
+          </button>
+        </div>
+
         {/* Quick autofill controls */}
         <div style={{
           marginTop: '32px',

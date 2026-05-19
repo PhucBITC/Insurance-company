@@ -10,6 +10,7 @@ import CustomerLayout from './layouts/CustomerLayout';
 
 // Core Pages
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -55,6 +56,7 @@ function App() {
         <Routes>
           {/* Public Route */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           {/* Root Redirect */}
           <Route path="/" element={<HomeRedirect />} />

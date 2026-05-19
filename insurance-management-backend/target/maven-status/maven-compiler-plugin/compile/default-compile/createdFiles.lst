@@ -9,7 +9,9 @@ com\insurance\entity\ERole.class
 com\insurance\repository\RoleRepository.class
 com\insurance\controller\TestController.class
 com\insurance\entity\User.class
+com\insurance\dto\MessageResponse.class
 com\insurance\controller\AuthController.class
+com\insurance\dto\SignupRequestDto.class
 com\insurance\security\JwtTokenProvider.class
 com\insurance\security\JwtAuthenticationFilter.class
 com\insurance\security\UserDetailsImpl.class
