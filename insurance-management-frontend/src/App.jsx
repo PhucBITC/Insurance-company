@@ -12,8 +12,11 @@ import CustomerLayout from './layouts/CustomerLayout';
 // Core Pages
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import UsersManagement from './pages/admin/UsersManagement';
+import PackagesManagement from './pages/admin/PackagesManagement';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+
 
 // Helper redirect component for root "/"
 const HomeRedirect = () => {
@@ -69,8 +72,8 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="users" element={<PlaceholderPage title="Quản lý tài khoản" desc="Chức năng tạo, sửa, xóa và khóa tài khoản các nhóm người dùng: Admin, Nhân viên và Khách hàng." />} />
-              <Route path="packages" element={<PlaceholderPage title="Quản lý gói bảo hiểm" desc="Chức năng thiết lập thông tin các gói bảo hiểm: Tên gói, mức đóng phí, thời hạn, quyền lợi và điều kiện bảo hiểm." />} />
+              <Route path="users" element={<UsersManagement />} />
+              <Route path="packages" element={<PackagesManagement />} />
               <Route path="assignments" element={<PlaceholderPage title="Phân công nhân sự" desc="Chức năng gán khách hàng đăng ký tham gia bảo hiểm cho một nhân viên cụ thể chăm sóc và giải quyết hồ sơ." />} />
               <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
             </Route>
