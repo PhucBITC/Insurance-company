@@ -28,7 +28,7 @@ const CustomerDashboard = () => {
       {/* Page Header */}
       <PageHeader 
         title="Trang Cá Nhân Khách Hàng" 
-        description="Chào mừng bạn đến với Cổng bảo hiểm InsurePro. Dễ dàng xem hợp đồng hiện có, tạo báo cáo sự cố hoặc hỏi đáp trợ lý ảo."
+        description="Chào mừng bạn đến với Cổng bảo hiểm Bảo An. Dễ dàng xem hợp đồng hiện có, tạo báo cáo sự cố hoặc hỏi đáp trợ lý ảo."
         actions={actionButtons}
       />
 

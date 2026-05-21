@@ -2,8 +2,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShieldCheck, HeartHandshake, Briefcase } from 'lucide-react';
 import StatusBadge from './StatusBadge';
+import { useUI } from '../context/UIContext';
 
 const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
+  const { t } = useUI();
   const location = useLocation();
 
   const getRoleIcon = () => {
@@ -24,8 +26,9 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
       opacity: isSidebarOpen ? 1 : 0,
       overflow: 'hidden',
       transition: 'var(--transition-normal)',
-      backgroundColor: '#1e293b', // Deep dark slate background to give high-end contrast
-      color: '#cbd5e1',
+      backgroundColor: 'var(--card)',
+      color: 'var(--text-secondary)',
+      borderRight: '1px solid var(--border)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 50,
@@ -36,7 +39,7 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
       {/* Brand Header */}
       <div style={{
         padding: '20px 24px',
-        borderBottom: '1px solid #334155',
+        borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px'
@@ -55,31 +58,12 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
           {getRoleIcon()}
         </div>
         <div style={{ overflow: 'hidden' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'white', letterSpacing: '0.05em' }}>INSURE PRO</h2>
-          <span style={{ fontSize: '0.675rem', color: '#94a3b8', fontWeight: '600', tracking: '0.1em', textTransform: 'uppercase' }}>
-            {user?.role === 'ROLE_ADMIN' ? 'Hệ thống Quản trị' : user?.role === 'ROLE_EMPLOYEE' ? 'Cổng Nhân viên' : 'Cổng Khách hàng'}
+          <h2 style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '0.05em' }}>{t('insurePro')}</h2>
+          <span style={{ fontSize: '0.675rem', color: 'var(--text-muted)', fontWeight: '600', tracking: '0.1em', textTransform: 'uppercase' }}>
+            {user?.role === 'ROLE_ADMIN' ? t('adminSystem') : user?.role === 'ROLE_EMPLOYEE' ? t('employeePortal') : t('customerPortal')}
           </span>
         </div>
       </div>
-
-      {/* User Info Section */}
-      {user && (
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #334155' }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid #334155',
-            padding: '12px',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <p style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.email}
-            </p>
-            <div style={{ marginTop: '6px' }}>
-              <StatusBadge status={user.role} />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Navigation Menu */}
       <nav style={{ padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1 }}>
@@ -96,15 +80,16 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
                 gap: '12px',
                 padding: '10px 16px',
                 borderRadius: 'var(--radius-sm)',
-                color: isActive ? '#ffffff' : '#94a3b8',
+                color: isActive ? '#ffffff' : 'var(--text-secondary)',
                 backgroundColor: isActive ? 'var(--primary)' : 'transparent',
                 fontWeight: isActive ? '600' : '500',
                 fontSize: '0.875rem',
                 transition: 'var(--transition-fast)'
               }}
+              className={!isActive ? "sidebar-link-hover" : ""}
             >
-              {Icon && <Icon size={18} style={{ color: isActive ? '#ffffff' : '#64748b' }} />}
-              <span>{item.name}</span>
+              {Icon && <Icon size={18} style={{ color: isActive ? '#ffffff' : 'var(--text-muted)' }} />}
+              <span>{t('path:' + item.path)}</span>
             </Link>
           );
         })}
@@ -113,12 +98,12 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
       {/* Sidebar Footer */}
       <div style={{
         padding: '16px 24px',
-        borderTop: '1px solid #334155',
+        borderTop: '1px solid var(--border)',
         fontSize: '0.75rem',
-        color: '#64748b',
+        color: 'var(--text-muted)',
         textAlign: 'center'
       }}>
-        InsurePro SaaS v1.0
+        Bảo An SaaS v1.0
       </div>
     </aside>
   );

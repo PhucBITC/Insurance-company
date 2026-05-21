@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UIProvider } from './context/UIContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Layouts
@@ -50,58 +51,60 @@ const PlaceholderPage = ({ title, desc }) => (
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Route */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<LoginPage />} />
+    <UIProvider>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            {/* Public Route */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<LoginPage />} />
 
-          {/* Root Redirect */}
-          <Route path="/" element={<HomeRedirect />} />
+            {/* Root Redirect */}
+            <Route path="/" element={<HomeRedirect />} />
 
-          {/* Admin Protected Routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
-              <AdminLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<PlaceholderPage title="Quản lý tài khoản" desc="Chức năng tạo, sửa, xóa và khóa tài khoản các nhóm người dùng: Admin, Nhân viên và Khách hàng." />} />
-            <Route path="packages" element={<PlaceholderPage title="Quản lý gói bảo hiểm" desc="Chức năng thiết lập thông tin các gói bảo hiểm: Tên gói, mức đóng phí, thời hạn, quyền lợi và điều kiện bảo hiểm." />} />
-            <Route path="assignments" element={<PlaceholderPage title="Phân công nhân sự" desc="Chức năng gán khách hàng đăng ký tham gia bảo hiểm cho một nhân viên cụ thể chăm sóc và giải quyết hồ sơ." />} />
-            <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
-          </Route>
+            {/* Admin Protected Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['ROLE_ADMIN']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<PlaceholderPage title="Quản lý tài khoản" desc="Chức năng tạo, sửa, xóa và khóa tài khoản các nhóm người dùng: Admin, Nhân viên và Khách hàng." />} />
+              <Route path="packages" element={<PlaceholderPage title="Quản lý gói bảo hiểm" desc="Chức năng thiết lập thông tin các gói bảo hiểm: Tên gói, mức đóng phí, thời hạn, quyền lợi và điều kiện bảo hiểm." />} />
+              <Route path="assignments" element={<PlaceholderPage title="Phân công nhân sự" desc="Chức năng gán khách hàng đăng ký tham gia bảo hiểm cho một nhân viên cụ thể chăm sóc và giải quyết hồ sơ." />} />
+              <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
+            </Route>
 
-          {/* Employee Protected Routes */}
-          <Route path="/employee" element={
-            <ProtectedRoute allowedRoles={['ROLE_EMPLOYEE']}>
-              <EmployeeLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="dashboard" element={<EmployeeDashboard />} />
-            <Route path="customers" element={<PlaceholderPage title="Danh sách khách hàng phụ trách" desc="Xem thông tin chi tiết và ghi chú chăm sóc đối với những khách hàng được quản trị viên phân công phụ trách." />} />
-            <Route path="incidents" element={<PlaceholderPage title="Xử lý báo cáo sự cố" desc="Tiếp nhận, kiểm tra hồ sơ yêu cầu bồi thường bảo hiểm, cập nhật trạng thái duyệt/từ chối hồ sơ sự cố." />} />
-          </Route>
+            {/* Employee Protected Routes */}
+            <Route path="/employee" element={
+              <ProtectedRoute allowedRoles={['ROLE_EMPLOYEE']}>
+                <EmployeeLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<EmployeeDashboard />} />
+              <Route path="customers" element={<PlaceholderPage title="Danh sách khách hàng phụ trách" desc="Xem thông tin chi tiết và ghi chú chăm sóc đối với những khách hàng được quản trị viên phân công phụ trách." />} />
+              <Route path="incidents" element={<PlaceholderPage title="Xử lý báo cáo sự cố" desc="Tiếp nhận, kiểm tra hồ sơ yêu cầu bồi thường bảo hiểm, cập nhật trạng thái duyệt/từ chối hồ sơ sự cố." />} />
+            </Route>
 
-          {/* Customer Protected Routes */}
-          <Route path="/customer" element={
-            <ProtectedRoute allowedRoles={['ROLE_CUSTOMER']}>
-              <CustomerLayout />
-            </ProtectedRoute>
-          }>
-            <Route path="dashboard" element={<CustomerDashboard />} />
-            <Route path="packages" element={<PlaceholderPage title="Danh sách gói bảo hiểm" desc="Xem danh sách các gói bảo hiểm đang hoạt động của công ty và thực hiện đăng ký tham gia trực tuyến." />} />
-            <Route path="my-insurances" element={<PlaceholderPage title="Hợp đồng của tôi" desc="Theo dõi lịch sử tham gia, thông tin ngày bắt đầu, ngày kết thúc và hạn mức bồi thường của các hợp đồng đã ký." />} />
-            <Route path="reports" element={<PlaceholderPage title="Báo cáo tai nạn / Sự cố" desc="Gửi báo cáo yêu cầu bồi thường (loại sự cố, mô tả sự cố, hình ảnh chứng minh) khi phát sinh tai nạn, ốm đau." />} />
-            <Route path="chatbot" element={<PlaceholderPage title="Trợ lý ảo AI Chatbot" desc="Hỏi đáp thông minh về điều khoản bảo hiểm, hướng dẫn thủ tục bồi thường tự động qua tài liệu nội bộ PDF." />} />
-          </Route>
+            {/* Customer Protected Routes */}
+            <Route path="/customer" element={
+              <ProtectedRoute allowedRoles={['ROLE_CUSTOMER']}>
+                <CustomerLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<CustomerDashboard />} />
+              <Route path="packages" element={<PlaceholderPage title="Danh sách gói bảo hiểm" desc="Xem danh sách các gói bảo hiểm đang hoạt động của công ty và thực hiện đăng ký tham gia trực tuyến." />} />
+              <Route path="my-insurances" element={<PlaceholderPage title="Hợp đồng của tôi" desc="Theo dõi lịch sử tham gia, thông tin ngày bắt đầu, ngày kết thúc và hạn mức bồi thường của các hợp đồng đã ký." />} />
+              <Route path="reports" element={<PlaceholderPage title="Báo cáo tai nạn / Sự cố" desc="Gửi báo cáo yêu cầu bồi thường (loại sự cố, mô tả sự cố, hình ảnh chứng minh) khi phát sinh tai nạn, ốm đau." />} />
+              <Route path="chatbot" element={<PlaceholderPage title="Trợ lý ảo AI Chatbot" desc="Hỏi đáp thông minh về điều khoản bảo hiểm, hướng dẫn thủ tục bồi thường tự động qua tài liệu nội bộ PDF." />} />
+            </Route>
 
-          {/* Fallback to Root */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Fallback to Root */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </UIProvider>
   );
 }
 

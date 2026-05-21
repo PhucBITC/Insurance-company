@@ -5,15 +5,14 @@ import {
   UserCheck, 
   Activity, 
   PlusCircle, 
-  Settings, 
-  RefreshCw,
-  Search
+  RefreshCw
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import StatCard from '../../components/StatCard';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import SearchFilterBar from '../../components/SearchFilterBar';
+import { useUI } from '../../context/UIContext';
 
 // Recharts imports
 import { 
@@ -27,6 +26,7 @@ import {
 } from 'recharts';
 
 const AdminDashboard = () => {
+  const { t, language } = useUI();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
 
@@ -42,12 +42,54 @@ const AdminDashboard = () => {
 
   // Simulated audit logs
   const allLogs = [
-    { id: 1, action: 'Tạo gói bảo hiểm "Gia Đình An Vui"', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '10 phút trước', status: 'SUCCESS' },
-    { id: 2, action: 'Đăng ký tài khoản khách hàng mới', user: 'customer@insurance.com', role: 'ROLE_CUSTOMER', time: '25 phút trước', status: 'SUCCESS' },
-    { id: 3, action: 'Phân công khách hàng cho nhân viên', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '1 giờ trước', status: 'SUCCESS' },
-    { id: 4, action: 'Cập nhật trạng thái sự cố #SR-409', user: 'employee@insurance.com', role: 'ROLE_EMPLOYEE', time: '2 giờ trước', status: 'WARNING' },
-    { id: 5, action: 'Thử nghiệm truy cập API trái phép', user: 'unknown@test.com', role: 'UNKNOWN', time: '4 giờ trước', status: 'DANGER' },
-    { id: 6, action: 'Thay đổi cấu hình hệ thống bảo mật', user: 'admin@insurance.com', role: 'ROLE_ADMIN', time: '1 ngày trước', status: 'SUCCESS' },
+    { 
+      id: 1, 
+      action: language === 'vi' ? 'Tạo gói bảo hiểm "Gia Đình An Vui"' : 'Created insurance package "Happy Family"', 
+      user: 'admin@insurance.com', 
+      role: 'ROLE_ADMIN', 
+      time: language === 'vi' ? '10 phút trước' : '10 minutes ago', 
+      status: 'SUCCESS' 
+    },
+    { 
+      id: 2, 
+      action: language === 'vi' ? 'Đăng ký tài khoản khách hàng mới' : 'Registered new customer account', 
+      user: 'customer@insurance.com', 
+      role: 'ROLE_CUSTOMER', 
+      time: language === 'vi' ? '25 phút trước' : '25 minutes ago', 
+      status: 'SUCCESS' 
+    },
+    { 
+      id: 3, 
+      action: language === 'vi' ? 'Phân công khách hàng cho nhân viên' : 'Assigned customer to support employee', 
+      user: 'admin@insurance.com', 
+      role: 'ROLE_ADMIN', 
+      time: language === 'vi' ? '1 giờ trước' : '1 hour ago', 
+      status: 'SUCCESS' 
+    },
+    { 
+      id: 4, 
+      action: language === 'vi' ? 'Cập nhật trạng thái sự cố #SR-409' : 'Updated incident report #SR-409 status', 
+      user: 'employee@insurance.com', 
+      role: 'ROLE_EMPLOYEE', 
+      time: language === 'vi' ? '2 giờ trước' : '2 hours ago', 
+      status: 'WARNING' 
+    },
+    { 
+      id: 5, 
+      action: language === 'vi' ? 'Thử nghiệm truy cập API trái phép' : 'Unauthorized API access attempt', 
+      user: 'unknown@test.com', 
+      role: 'UNKNOWN', 
+      time: language === 'vi' ? '4 giờ trước' : '4 hours ago', 
+      status: 'DANGER' 
+    },
+    { 
+      id: 6, 
+      action: language === 'vi' ? 'Thay đổi cấu hình hệ thống bảo mật' : 'Modified security system configurations', 
+      user: 'admin@insurance.com', 
+      role: 'ROLE_ADMIN', 
+      time: language === 'vi' ? '1 ngày trước' : '1 day ago', 
+      status: 'SUCCESS' 
+    },
   ];
 
   // Filter & Search logic
@@ -59,10 +101,10 @@ const AdminDashboard = () => {
   });
 
   const headers = [
-    { label: 'Hành động nghiệp vụ', key: 'action' },
-    { label: 'Tài khoản', key: 'user' },
-    { label: 'Thời gian', key: 'time' },
-    { label: 'Trạng thái', key: 'status', width: '120px' }
+    { label: t('tableHeaderAction'), key: 'action' },
+    { label: t('tableHeaderUser'), key: 'user' },
+    { label: t('tableHeaderTime'), key: 'time' },
+    { label: t('tableHeaderStatus'), key: 'status', width: '120px' }
   ];
 
   // Custom table cell renderer
@@ -83,11 +125,11 @@ const AdminDashboard = () => {
     <>
       <button className="btn btn-secondary" style={{ height: '38px', gap: '6px' }}>
         <RefreshCw size={14} />
-        Làm mới dữ liệu
+        {t('refreshBtn')}
       </button>
       <button className="btn btn-primary" style={{ height: '38px', gap: '6px' }}>
         <PlusCircle size={16} />
-        Gói Bảo Hiểm Mới
+        {t('newPackageBtn')}
       </button>
     </>
   );
@@ -97,8 +139,8 @@ const AdminDashboard = () => {
       
       {/* Page Header */}
       <PageHeader 
-        title="Dashboard Tổng Quan" 
-        description="Chào mừng bạn đến với Cổng quản trị doanh nghiệp InsurePro. Theo dõi số liệu vận hành và hệ thống bảo hiểm."
+        title={t('dashboardTitle')} 
+        description={t('dashboardDesc')}
         actions={actionButtons}
       />
 
@@ -109,44 +151,44 @@ const AdminDashboard = () => {
         gap: '24px'
       }}>
         <StatCard 
-          title="TỔNG SỐ TÀI KHOẢN" 
+          title={t('statTotalUsers')} 
           value="24" 
           icon={Users} 
-          trend="+12% tháng này" 
+          trend={t('statTotalUsersTrend')} 
           trendType="up"
-          description="Đang hoạt động tốt"
+          description={t('statTotalUsersDesc')}
         />
         <StatCard 
-          title="GÓI BẢO HIỂM ACTIVE" 
+          title={t('statActivePackages')} 
           value="6" 
           icon={FileText} 
-          trend="Đạt chuẩn MVP"
+          trend={t('statActivePackagesTrend')}
           trendType="up"
-          description="Khách hàng có thể mua"
+          description={t('statActivePackagesDesc')}
         />
         <StatCard 
-          title="PHÂN CÔNG PHỤ TRÁCH" 
+          title={t('statAssignments')} 
           value="18" 
           icon={UserCheck} 
-          trend="+3 mới gán" 
+          trend={t('statAssignmentsTrend')} 
           trendType="up"
-          description="Phục vụ khách hàng tốt"
+          description={t('statAssignmentsDesc')}
         />
         <StatCard 
-          title="YÊU CẦU SỰ CỐ PENDING" 
+          title={t('statPendingIncidents')} 
           value="3" 
           icon={Activity} 
-          trend="-25% thời gian xử lý" 
+          trend={t('statPendingIncidentsTrend')} 
           trendType="down"
-          description="Cần nhân viên xử lý ngay"
+          description={t('statPendingIncidentsDesc')}
         />
       </div>
 
       {/* Analytics Chart Block */}
       <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div>
-          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Xu Hướng Đăng Ký Bảo Hiểm</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Biểu đồ thống kê số lượt đăng ký mua bảo hiểm mới 6 tháng gần nhất.</p>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>{t('chartTitle')}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{t('chartDesc')}</p>
         </div>
 
         <div style={{ width: '100%', height: 280 }}>
@@ -178,22 +220,22 @@ const AdminDashboard = () => {
       {/* Logs Table Section */}
       <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div>
-          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>Nhật Ký Hoạt Động Hệ Thống</h3>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Xem lịch sử các thao tác thay đổi quyền hạn và quản lý của người dùng.</p>
+          <h3 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--text-main)' }}>{t('tableTitle')}</h3>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>{t('tableDesc')}</p>
         </div>
 
         {/* Filter controls */}
         <SearchFilterBar 
-          searchPlaceholder="Tìm kiếm hành động hoặc tài khoản..."
+          searchPlaceholder={t('tableSearchPlaceholder')}
           searchValue={searchTerm}
           onSearchChange={setSearchTerm}
           filterValue={filterRole}
           onFilterChange={setFilterRole}
           filterOptions={[
-            { value: 'ALL', label: 'Tất cả các Role' },
-            { value: 'ROLE_ADMIN', label: 'Admin' },
-            { value: 'ROLE_EMPLOYEE', label: 'Nhân viên' },
-            { value: 'ROLE_CUSTOMER', label: 'Khách hàng' }
+            { value: 'ALL', label: t('filterAllRoles') },
+            { value: 'ROLE_ADMIN', label: t('filterAdmin') },
+            { value: 'ROLE_EMPLOYEE', label: t('filterEmployee') },
+            { value: 'ROLE_CUSTOMER', label: t('filterCustomer') }
           ]}
         />
 
