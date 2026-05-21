@@ -1,54 +1,89 @@
 import React from 'react';
 
-const StatusBadge = ({ status }) => {
-  const normalized = status ? status.toUpperCase().trim() : '';
+const StatusBadge = ({ status, variant }) => {
+  const normalized = status ? status.toUpperCase().trim() : 'ACTIVE';
 
   const getStyle = () => {
     switch (normalized) {
       case 'ACTIVE':
-      case 'ROLE_ADMIN':
+      case 'SUCCESS':
       case 'APPROVED':
       case 'RESOLVED':
-      case 'SUCCESS':
         return {
           bg: 'var(--success-light)',
           color: 'var(--success)',
           border: 'rgba(22, 163, 74, 0.15)',
-          text: status === 'ROLE_ADMIN' ? 'Admin' : status
+          text: 'ACTIVE'
         };
-      case 'PENDING':
-      case 'ROLE_EMPLOYEE':
-      case 'PROCESSING':
-      case 'WARNING':
-      case 'NEED_MORE_INFO':
-      case 'ASSIGNED':
-        return {
-          bg: 'var(--warning-light)',
-          color: 'var(--warning)',
-          border: 'rgba(245, 158, 11, 0.15)',
-          text: status === 'ROLE_EMPLOYEE' ? 'Nhân viên' : status
-        };
-      case 'REJECTED':
+      case 'INACTIVE':
       case 'CANCELLED':
+        return {
+          bg: '#f1f5f9', // Gray neutral background
+          color: '#64748b', // Gray neutral text
+          border: 'rgba(100, 116, 139, 0.15)',
+          text: 'INACTIVE'
+        };
+      case 'LOCKED':
+      case 'REJECTED':
       case 'DANGER':
       case 'ERROR':
         return {
           bg: 'var(--danger-light)',
           color: 'var(--danger)',
           border: 'rgba(220, 38, 38, 0.15)',
-          text: status
+          text: normalized === 'LOCKED' ? 'LOCKED' : status
+        };
+      case 'ROLE_ADMIN':
+      case 'ADMIN':
+        return {
+          bg: 'var(--danger-light)',
+          color: 'var(--danger)',
+          border: 'rgba(220, 38, 38, 0.15)',
+          text: 'ADMIN'
+        };
+      case 'ROLE_EMPLOYEE':
+      case 'EMPLOYEE':
+      case 'PENDING':
+      case 'PROCESSING':
+      case 'WARNING':
+      case 'ASSIGNED':
+        return {
+          bg: 'var(--warning-light)',
+          color: 'var(--warning)',
+          border: 'rgba(245, 158, 11, 0.15)',
+          text: normalized.includes('EMPLOYEE') ? 'EMPLOYEE' : status
+        };
+      case 'ROLE_CUSTOMER':
+      case 'CUSTOMER':
+        return {
+          bg: 'var(--info-light)',
+          color: 'var(--info)',
+          border: 'rgba(14, 165, 233, 0.15)',
+          text: 'CUSTOMER'
         };
       default:
         return {
           bg: 'var(--info-light)',
           color: 'var(--info)',
           border: 'rgba(14, 165, 233, 0.15)',
-          text: status === 'ROLE_CUSTOMER' ? 'Khách hàng' : status
+          text: status
         };
     }
   };
 
   const badgeStyle = getStyle();
+
+  if (variant === 'text') {
+    return (
+      <span style={{
+        color: badgeStyle.color,
+        fontWeight: '600',
+        fontSize: '0.85rem'
+      }}>
+        {badgeStyle.text}
+      </span>
+    );
+  }
 
   return (
     <span className="badge" style={{

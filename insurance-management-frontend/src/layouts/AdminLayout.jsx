@@ -10,11 +10,11 @@ import {
 
 const AdminLayout = () => {
   const navItems = [
-    { path: '/admin/dashboard', name: 'Dashboard Tổng Quan', icon: LayoutDashboard },
-    { path: '/admin/users', name: 'Quản lý Tài khoản', icon: Shield },
-    { path: '/admin/packages', name: 'Gói Bảo Hiểm', icon: FileText },
-    { path: '/admin/assignments', name: 'Phân Công Nhân Sự', icon: Users },
-    { path: '/admin/logs', name: 'Lịch Sử Hoạt Động', icon: Activity },
+    { path: '/admin/dashboard', name: 'Dashboard tổng quan', icon: LayoutDashboard },
+    { path: '/admin/users', name: 'Quản lý tài khoản', icon: Shield },
+    { path: '/admin/packages', name: 'Gói bảo hiểm', icon: FileText },
+    { path: '/admin/assignments', name: 'Phân công nhân sự', icon: Users },
+    { path: '/admin/logs', name: 'Lịch sử hoạt động', icon: Activity },
   ];
 
   return <AppLayout navItems={navItems} />;

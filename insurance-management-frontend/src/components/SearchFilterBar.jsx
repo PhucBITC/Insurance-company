@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 const SearchFilterBar = ({ 
   searchPlaceholder = "Tìm kiếm...", 
@@ -8,6 +8,9 @@ const SearchFilterBar = ({
   filterValue,
   onFilterChange,
   filterOptions = [],
+  filterValue2,
+  onFilterChange2,
+  filterOptions2 = [],
   actions
 }) => {
   return (
@@ -24,7 +27,7 @@ const SearchFilterBar = ({
         alignItems: 'center',
         gap: '12px',
         flexGrow: 1,
-        maxWidth: '500px',
+        maxWidth: '700px',
         width: '100%',
         flexWrap: 'wrap'
       }}>
@@ -48,7 +51,7 @@ const SearchFilterBar = ({
         </div>
 
         {/* Filter select wrapper */}
-        {filterOptions.length > 0 && (
+        {filterOptions && filterOptions.length > 0 && (
           <div style={{ position: 'relative', minWidth: '160px' }}>
             <select
               className="form-input"
@@ -66,6 +69,33 @@ const SearchFilterBar = ({
               }}
             >
               {filterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Second Filter select wrapper */}
+        {filterOptions2 && filterOptions2.length > 0 && (
+          <div style={{ position: 'relative', minWidth: '160px' }}>
+            <select
+              className="form-input"
+              value={filterValue2}
+              onChange={(e) => onFilterChange2(e.target.value)}
+              style={{
+                height: '38px',
+                paddingRight: '30px',
+                appearance: 'none',
+                cursor: 'pointer',
+                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
+                backgroundSize: '16px'
+              }}
+            >
+              {filterOptions2.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>

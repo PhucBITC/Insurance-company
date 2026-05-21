@@ -23,6 +23,7 @@ public class CustomerResponseDto {
     private String identityCard;
     private Long userId;
     private String email;
+    private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

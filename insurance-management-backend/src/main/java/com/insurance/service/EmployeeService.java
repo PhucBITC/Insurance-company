@@ -120,8 +120,11 @@ public class EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy nhân viên với ID " + id));
         
-        // Deleting employee will delete user due to CascadeType.ALL on employee.user
-        employeeRepository.delete(employee);
+        employee.setStatus("INACTIVE");
+        if (employee.getUser() != null) {
+            employee.getUser().setStatus("INACTIVE");
+        }
+        employeeRepository.save(employee);
     }
 
     private EmployeeResponseDto convertToDto(Employee employee) {
@@ -136,6 +139,7 @@ public class EmployeeService {
                 employee.getHireDate(),
                 employee.getUser().getId(),
                 employee.getUser().getEmail(),
+                employee.getStatus(),
                 employee.getCreatedAt(),
                 employee.getUpdatedAt()
         );

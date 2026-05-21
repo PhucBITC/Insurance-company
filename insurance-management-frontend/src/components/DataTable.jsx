@@ -1,28 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const DataTable = ({ 
   headers = [], 
   data = [], 
   rowsPerPage = 5,
-  renderCell
+  renderCell,
+  currentPage: externalPage,
+  onPageChange
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  
+  const isControlled = externalPage !== undefined;
+  const currentPage = isControlled ? externalPage : internalPage;
+  const setCurrentPage = isControlled ? onPageChange : setInternalPage;
 
   // Pagination calculation
   const totalPages = Math.ceil(data.length / rowsPerPage) || 1;
-  const startIndex = (currentPage - 1) * rowsPerPage;
+
+  // Ensure current page is within valid range
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    } else if (currentPage < 1) {
+      setCurrentPage(1);
+    }
+  }, [data.length, totalPages, currentPage, setCurrentPage]);
+
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (activePage - 1) * rowsPerPage;
   const paginatedData = data.slice(startIndex, startIndex + rowsPerPage);
 
   const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    if (activePage > 1) {
+      setCurrentPage(activePage - 1);
     }
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+    if (activePage < totalPages) {
+      setCurrentPage(activePage + 1);
     }
   };
 

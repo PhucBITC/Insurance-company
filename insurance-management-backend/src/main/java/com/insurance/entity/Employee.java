@@ -50,6 +50,9 @@ public class Employee {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
+    @Column(nullable = false, length = 20)
+    private String status = "ACTIVE";
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

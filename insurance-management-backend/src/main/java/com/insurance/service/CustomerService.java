@@ -54,6 +54,11 @@ public class CustomerService {
             throw new RuntimeException("Lỗi: Email '" + request.getEmail() + "' đã được sử dụng cho tài khoản khác!");
         }
 
+        if (request.getIdentityCard() != null && !request.getIdentityCard().trim().isEmpty() &&
+                customerRepository.existsByIdentityCard(request.getIdentityCard())) {
+            throw new RuntimeException("Lỗi: CMND/CCCD '" + request.getIdentityCard() + "' đã được sử dụng!");
+        }
+
         if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
             throw new RuntimeException("Lỗi: Mật khẩu là bắt buộc khi tạo tài khoản khách hàng mới!");
         }
@@ -97,6 +102,12 @@ public class CustomerService {
             throw new RuntimeException("Lỗi: Email '" + request.getEmail() + "' đã được sử dụng!");
         }
 
+        if (request.getIdentityCard() != null && !request.getIdentityCard().trim().isEmpty() &&
+                !request.getIdentityCard().equals(customer.getIdentityCard()) &&
+                customerRepository.existsByIdentityCard(request.getIdentityCard())) {
+            throw new RuntimeException("Lỗi: CMND/CCCD '" + request.getIdentityCard() + "' đã được sử dụng!");
+        }
+
         // Update User account
         user.setEmail(request.getEmail());
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
@@ -120,8 +131,11 @@ public class CustomerService {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy khách hàng với ID " + id));
 
-        // Deleting customer will delete user due to CascadeType.ALL on customer.user
-        customerRepository.delete(customer);
+        customer.setStatus("INACTIVE");
+        if (customer.getUser() != null) {
+            customer.getUser().setStatus("INACTIVE");
+        }
+        customerRepository.save(customer);
     }
 
     private CustomerResponseDto convertToDto(Customer customer) {
@@ -136,6 +150,7 @@ public class CustomerService {
                 customer.getIdentityCard(),
                 customer.getUser().getId(),
                 customer.getUser().getEmail(),
+                customer.getStatus(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt()
         );
