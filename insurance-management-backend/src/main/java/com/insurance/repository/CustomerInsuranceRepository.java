@@ -11,4 +11,10 @@ public interface CustomerInsuranceRepository extends JpaRepository<CustomerInsur
     List<CustomerInsurance> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
     List<CustomerInsurance> findAllByOrderByCreatedAtDesc();
     boolean existsByContractCode(String contractCode);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(ci) > 0 FROM CustomerInsurance ci " +
+            "WHERE ci.customer.id = ?1 " +
+            "AND ci.insurancePackage.id = ?2 " +
+            "AND (ci.status = 'PENDING' OR (ci.status = 'APPROVED' AND ci.endDate >= ?3))")
+    boolean hasActiveOrPendingInsurance(Long customerId, Long packageId, java.time.LocalDate today);
 }

@@ -44,14 +44,25 @@ public class CustomerInsuranceService {
             throw new RuntimeException("Lỗi: Gói bảo hiểm hiện tại không ở trạng thái hoạt động!");
         }
 
-        // Kiểm tra hồ sơ đầy đủ thông tin trước khi đăng ký bảo hiểm
-        if (customer.getFullName() == null || customer.getFullName().trim().isEmpty() || "Khách Hàng Mới".equals(customer.getFullName().trim()) ||
+        // Kiểm tra hồ sơ đầy đủ và hợp lệ trước khi đăng ký bảo hiểm
+        if (customer.getFullName() == null || customer.getFullName().trim().isEmpty() || 
+            customer.getFullName().trim().length() < 2 || 
+            "Khách Hàng Mới".equals(customer.getFullName().trim()) ||
             customer.getPhoneNumber() == null || customer.getPhoneNumber().trim().isEmpty() ||
+            !customer.getPhoneNumber().trim().matches("^(0[3|5|7|8|9])[0-9]{8}$") ||
             customer.getAddress() == null || customer.getAddress().trim().isEmpty() ||
+            customer.getAddress().trim().length() < 5 ||
             customer.getDateOfBirth() == null ||
+            customer.getDateOfBirth().isAfter(LocalDate.now()) ||
             customer.getGender() == null || customer.getGender().trim().isEmpty() ||
-            customer.getIdentityCard() == null || customer.getIdentityCard().trim().isEmpty()) {
-            throw new RuntimeException("Lỗi: Vui lòng cập nhật đầy đủ thông tin cá nhân (Họ tên, SĐT, Địa chỉ, Ngày sinh, Giới tính, CMND/CCCD) tại Trang cá nhân trước khi đăng ký mua gói bảo hiểm!");
+            customer.getIdentityCard() == null || customer.getIdentityCard().trim().isEmpty() ||
+            !customer.getIdentityCard().trim().matches("^[0-9]{9}$|^[0-9]{12}$")) {
+            throw new RuntimeException("Lỗi: Vui lòng cập nhật đầy đủ và chính xác thông tin cá nhân (Họ tên từ 2 ký tự và không dùng tên mặc định, SĐT 10 số Việt Nam, Địa chỉ từ 5 ký tự, Ngày sinh trong quá khứ, Giới tính, CMND/CCCD 9 hoặc 12 số) tại Trang cá nhân trước khi đăng ký mua gói bảo hiểm!");
+        }
+
+        // Kiểm tra đăng ký trùng lặp (chờ duyệt hoặc đang còn hiệu lực)
+        if (customerInsuranceRepository.hasActiveOrPendingInsurance(customer.getId(), insurancePackage.getId(), LocalDate.now())) {
+            throw new RuntimeException("Lỗi: Bạn đã đăng ký mua gói bảo hiểm này và yêu cầu đang chờ duyệt hoặc hợp đồng đang hoạt động!");
         }
 
         CustomerInsurance customerInsurance = new CustomerInsurance();

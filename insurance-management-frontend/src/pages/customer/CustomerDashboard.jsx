@@ -73,34 +73,59 @@ const CustomerDashboard = () => {
     
     // Họ tên
     if (!profile.fullName || !profile.fullName.trim()) {
-      errs.fullName = 'Họ và tên là bắt buộc';
+      errs.fullName = 'Họ và tên là bắt buộc và không được để trống';
     } else if (profile.fullName.trim().length < 2) {
       errs.fullName = 'Họ và tên phải có ít nhất 2 ký tự';
     } else if (profile.fullName.trim() === 'Khách Hàng Mới') {
-      errs.fullName = 'Vui lòng cập nhật họ tên thật của bạn';
+      errs.fullName = 'Vui lòng cập nhật họ và tên thật của bạn';
     }
 
     // Số điện thoại
-    if (profile.phoneNumber && profile.phoneNumber.trim()) {
-      if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(profile.phoneNumber.trim())) {
-        errs.phoneNumber = 'Số điện thoại không hợp lệ (phải gồm 10 chữ số, VD: 0912345678)';
-      }
+    if (!profile.phoneNumber || !profile.phoneNumber.trim()) {
+      errs.phoneNumber = 'Số điện thoại là bắt buộc và không được để trống';
+    } else if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(profile.phoneNumber.trim())) {
+      errs.phoneNumber = 'Số điện thoại không hợp lệ (phải gồm 10 chữ số, bắt đầu bằng 03/05/07/08/09)';
     }
 
     // CMND/CCCD
-    if (profile.identityCard && profile.identityCard.trim()) {
-      if (!/^[0-9]{9}$|^[0-9]{12}$/.test(profile.identityCard.trim())) {
-        errs.identityCard = 'Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)';
-      }
+    if (!profile.identityCard || !profile.identityCard.trim()) {
+      errs.identityCard = 'Số CMND/CCCD là bắt buộc và không được để trống';
+    } else if (!/^[0-9]{9}$|^[0-9]{12}$/.test(profile.identityCard.trim())) {
+      errs.identityCard = 'Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)';
     }
 
     // Ngày sinh
-    if (profile.dateOfBirth) {
-      const today = new Date();
-      const dob = new Date(profile.dateOfBirth);
-      if (dob > today) {
-        errs.dateOfBirth = 'Ngày sinh không được ở tương lai';
+    if (!profile.dateOfBirth) {
+      errs.dateOfBirth = 'Ngày sinh là bắt buộc';
+    } else {
+      const parts = profile.dateOfBirth.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+        const dob = new Date(year, month - 1, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (dob > today) {
+          errs.dateOfBirth = 'Ngày sinh không được ở tương lai';
+        }
+      } else {
+        errs.dateOfBirth = 'Ngày sinh không hợp lệ';
       }
+    }
+
+    // Giới tính
+    if (!profile.gender || !profile.gender.trim()) {
+      errs.gender = 'Giới tính là bắt buộc';
+    } else if (!['Nam', 'Nữ', 'Khác'].includes(profile.gender.trim())) {
+      errs.gender = 'Giới tính không hợp lệ';
+    }
+
+    // Địa chỉ
+    if (!profile.address || !profile.address.trim()) {
+      errs.address = 'Địa chỉ liên hệ là bắt buộc và không được để trống';
+    } else if (profile.address.trim().length < 5) {
+      errs.address = 'Địa chỉ liên hệ phải dài ít nhất 5 ký tự';
     }
 
     setErrors(errs);
@@ -241,7 +266,7 @@ const CustomerDashboard = () => {
               {errors.fullName && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.fullName}</span>}
             </div>
             <div className="form-group">
-              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số điện thoại</label>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số điện thoại <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input 
                 type="text" 
                 name="phoneNumber" 
@@ -255,7 +280,7 @@ const CustomerDashboard = () => {
               {errors.phoneNumber && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.phoneNumber}</span>}
             </div>
             <div className="form-group">
-              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số CMND/CCCD</label>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số CMND/CCCD <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input 
                 type="text" 
                 name="identityCard" 
@@ -269,7 +294,7 @@ const CustomerDashboard = () => {
               {errors.identityCard && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.identityCard}</span>}
             </div>
             <div className="form-group">
-              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Ngày sinh</label>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Ngày sinh <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input 
                 type="date" 
                 name="dateOfBirth" 
@@ -283,27 +308,35 @@ const CustomerDashboard = () => {
               {errors.dateOfBirth && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.dateOfBirth}</span>}
             </div>
             <div className="form-group">
-              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Giới tính</label>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Giới tính <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select 
                 name="gender" 
-                className="form-input" 
+                className={`form-input ${errors.gender ? 'border-danger' : ''}`} 
                 value={profile.gender} 
-                onChange={(e) => setProfile(prev => ({ ...prev, gender: e.target.value }))}
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, gender: e.target.value }));
+                  if (errors.gender) setErrors(prev => ({ ...prev, gender: '' }));
+                }}
               >
                 <option value="Nam">Nam</option>
                 <option value="Nữ">Nữ</option>
                 <option value="Khác">Khác</option>
               </select>
+              {errors.gender && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.gender}</span>}
             </div>
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Địa chỉ liên hệ</label>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Địa chỉ liên hệ <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input 
                 type="text" 
                 name="address" 
-                className="form-input" 
+                className={`form-input ${errors.address ? 'border-danger' : ''}`} 
                 value={profile.address} 
-                onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))} 
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, address: e.target.value }));
+                  if (errors.address) setErrors(prev => ({ ...prev, address: '' }));
+                }} 
               />
+              {errors.address && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.address}</span>}
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
               <button 
@@ -483,6 +516,10 @@ const CustomerDashboard = () => {
               </div>
             </div>
           </div>
+
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+            Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.
+          </p>
 
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
             Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.

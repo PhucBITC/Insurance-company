@@ -150,41 +150,59 @@ public class CustomerService {
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hồ sơ khách hàng!"));
 
         if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            throw new RuntimeException("Lỗi: Họ và tên không được để trống!");
+            throw new RuntimeException("Lỗi: Họ và tên là bắt buộc và không được để trống!");
+        }
+
+        if (request.getFullName().trim().length() < 2) {
+            throw new RuntimeException("Lỗi: Họ và tên phải có ít nhất 2 ký tự!");
         }
 
         if ("Khách Hàng Mới".equals(request.getFullName().trim())) {
             throw new RuntimeException("Lỗi: Vui lòng cập nhật họ và tên thật của bạn!");
         }
 
-        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-            if (!request.getPhoneNumber().trim().matches("^(0[3|5|7|8|9])[0-9]{8}$")) {
-                throw new RuntimeException("Lỗi: Số điện thoại không hợp lệ (phải gồm 10 chữ số, bắt đầu bằng 03/05/07/08/09)!");
-            }
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Số điện thoại là bắt buộc!");
+        }
+        if (!request.getPhoneNumber().trim().matches("^(0[3|5|7|8|9])[0-9]{8}$")) {
+            throw new RuntimeException("Lỗi: Số điện thoại không hợp lệ (phải gồm 10 chữ số, bắt đầu bằng 03/05/07/08/09)!");
         }
 
-        if (request.getIdentityCard() != null && !request.getIdentityCard().trim().isEmpty()) {
-            if (!request.getIdentityCard().trim().matches("^[0-9]{9}$|^[0-9]{12}$")) {
-                throw new RuntimeException("Lỗi: Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)!");
-            }
-            if (!request.getIdentityCard().equals(customer.getIdentityCard()) &&
-                    customerRepository.existsByIdentityCard(request.getIdentityCard())) {
-                throw new RuntimeException("Lỗi: Số CMND/CCCD này đã được sử dụng bởi một khách hàng khác!");
-            }
+        if (request.getIdentityCard() == null || request.getIdentityCard().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Số CMND/CCCD là bắt buộc!");
+        }
+        if (!request.getIdentityCard().trim().matches("^[0-9]{9}$|^[0-9]{12}$")) {
+            throw new RuntimeException("Lỗi: Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)!");
+        }
+        if (!request.getIdentityCard().equals(customer.getIdentityCard()) &&
+                customerRepository.existsByIdentityCard(request.getIdentityCard())) {
+            throw new RuntimeException("Lỗi: Số CMND/CCCD này đã được sử dụng bởi một khách hàng khác!");
         }
 
-        if (request.getDateOfBirth() != null) {
-            if (request.getDateOfBirth().isAfter(java.time.LocalDate.now())) {
-                throw new RuntimeException("Lỗi: Ngày sinh không được ở tương lai!");
-            }
+        if (request.getDateOfBirth() == null) {
+            throw new RuntimeException("Lỗi: Ngày sinh là bắt buộc!");
+        }
+        if (request.getDateOfBirth().isAfter(java.time.LocalDate.now())) {
+            throw new RuntimeException("Lỗi: Ngày sinh không được ở tương lai!");
+        }
+
+        if (request.getGender() == null || request.getGender().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Giới tính là bắt buộc!");
+        }
+
+        if (request.getAddress() == null || request.getAddress().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Địa chỉ liên hệ là bắt buộc!");
+        }
+        if (request.getAddress().trim().length() < 5) {
+            throw new RuntimeException("Lỗi: Địa chỉ liên hệ phải dài ít nhất 5 ký tự!");
         }
 
         customer.setFullName(request.getFullName().trim());
-        customer.setPhoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null);
-        customer.setAddress(request.getAddress() != null ? request.getAddress().trim() : null);
+        customer.setPhoneNumber(request.getPhoneNumber().trim());
+        customer.setAddress(request.getAddress().trim());
         customer.setDateOfBirth(request.getDateOfBirth());
-        customer.setGender(request.getGender());
-        customer.setIdentityCard(request.getIdentityCard() != null ? request.getIdentityCard().trim() : null);
+        customer.setGender(request.getGender().trim());
+        customer.setIdentityCard(request.getIdentityCard().trim());
 
         Customer savedCustomer = customerRepository.save(customer);
         return convertToDto(savedCustomer);
