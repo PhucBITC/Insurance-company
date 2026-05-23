@@ -43,6 +43,9 @@ public class CustomerInsurance {
     @Column(nullable = false, length = 20)
     private String status = "PENDING"; // PENDING, APPROVED, REJECTED
 
+    @Column(name = "deleted_by_customer", nullable = false)
+    private Boolean deletedByCustomer = false;
+
     @Column(name = "contract_code", unique = true, length = 50)
     private String contractCode;
 

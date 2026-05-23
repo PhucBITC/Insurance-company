@@ -80,7 +80,7 @@ public class CustomerInsuranceService {
         Customer customer = customerRepository.findByUserId(customerUserId)
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hồ sơ khách hàng!"));
 
-        return customerInsuranceRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId()).stream()
+        return customerInsuranceRepository.findByCustomerIdAndDeletedByCustomerFalseOrderByCreatedAtDesc(customer.getId()).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -159,7 +159,12 @@ public class CustomerInsuranceService {
             throw new RuntimeException("Lỗi: Không thể tự xóa hoặc hủy hợp đồng bảo hiểm đã được phê duyệt và đang hoạt động!");
         }
 
-        customerInsuranceRepository.delete(customerInsurance);
+        if ("PENDING".equals(customerInsurance.getStatus())) {
+            customerInsuranceRepository.delete(customerInsurance);
+        } else if ("REJECTED".equals(customerInsurance.getStatus())) {
+            customerInsurance.setDeletedByCustomer(true);
+            customerInsuranceRepository.save(customerInsurance);
+        }
     }
 
     public void deleteCustomerInsuranceByAdmin(Long insuranceId) {

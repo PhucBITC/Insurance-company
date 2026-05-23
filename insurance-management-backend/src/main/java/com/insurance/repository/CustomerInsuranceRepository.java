@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface CustomerInsuranceRepository extends JpaRepository<CustomerInsurance, Long> {
-    List<CustomerInsurance> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+    List<CustomerInsurance> findByCustomerIdAndDeletedByCustomerFalseOrderByCreatedAtDesc(Long customerId);
     List<CustomerInsurance> findAllByOrderByCreatedAtDesc();
     boolean existsByContractCode(String contractCode);
 
