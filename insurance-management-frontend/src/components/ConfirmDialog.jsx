@@ -7,11 +7,14 @@ const ConfirmDialog = ({
   message = "Bạn có chắc chắn muốn thực hiện hành động này không?",
   onConfirm,
   onClose,
+  onCancel,
   confirmText = "Xác nhận",
   cancelText = "Hủy",
   type = "primary" // danger, primary
 }) => {
   if (!isOpen) return null;
+
+  const handleClose = onClose || onCancel;
 
   return (
     <div style={{
@@ -49,7 +52,7 @@ const ConfirmDialog = ({
       }}>
         {/* Close Button on top right */}
         <button 
-          onClick={onClose}
+          onClick={handleClose}
           style={{
             position: 'absolute',
             top: '16px',
@@ -97,7 +100,7 @@ const ConfirmDialog = ({
           borderTop: '1px solid var(--border)',
           paddingTop: '16px'
         }}>
-          <button onClick={onClose} className="btn btn-secondary">
+          <button onClick={handleClose} className="btn btn-secondary">
             {cancelText}
           </button>
           <button 

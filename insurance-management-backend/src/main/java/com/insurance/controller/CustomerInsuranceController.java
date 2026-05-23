@@ -74,4 +74,28 @@ public class CustomerInsuranceController {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
         }
     }
+
+    @DeleteMapping("/customer/insurances/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> deleteCustomerInsurance(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long id) {
+        try {
+            customerInsuranceService.deleteCustomerInsuranceByCustomer(userDetails.getId(), id);
+            return ResponseEntity.ok(new MessageResponse("Xóa/Hủy yêu cầu đăng ký bảo hiểm thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/admin/insurances/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteCustomerInsuranceByAdmin(@PathVariable Long id) {
+        try {
+            customerInsuranceService.deleteCustomerInsuranceByAdmin(id);
+            return ResponseEntity.ok(new MessageResponse("Xóa yêu cầu đăng ký bảo hiểm thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
+    }
 }

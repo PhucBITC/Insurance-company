@@ -15,8 +15,10 @@ import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Toast from '../../components/Toast';
+import { useAuth } from '../../context/AuthContext';
 
 const InsuranceApprovals = () => {
+  const { user } = useAuth();
   const [insurances, setInsurances] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -34,6 +36,11 @@ const InsuranceApprovals = () => {
   const [selectedRejectId, setSelectedRejectId] = useState(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+
+  // Delete State
+  const [selectedDeleteId, setSelectedDeleteId] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchInsurances = async () => {
     setLoading(true);
@@ -115,6 +122,32 @@ const InsuranceApprovals = () => {
     }
   };
 
+  const handleDeleteClick = (id) => {
+    setSelectedDeleteId(id);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedDeleteId) return;
+    setIsDeleteConfirmOpen(false);
+    setDeleting(true);
+    try {
+      await apiClient.delete(`/api/admin/insurances/${selectedDeleteId}`);
+      showToast('Xóa yêu cầu đăng ký bảo hiểm thành công!', 'success');
+      fetchInsurances();
+    } catch (err) {
+      console.error(err);
+      let msg = 'Có lỗi xảy ra khi xóa hợp đồng.';
+      if (err.response && err.response.data && err.response.data.message) {
+        msg = err.response.data.message;
+      }
+      showToast(msg, 'error');
+    } finally {
+      setSelectedDeleteId(null);
+      setDeleting(false);
+    }
+  };
+
   const formatCurrency = (val) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
   };
@@ -189,14 +222,24 @@ const InsuranceApprovals = () => {
           return <StatusBadge status="APPROVED" text="Đang hiệu lực" />;
         } else if (val === 'REJECTED') {
           return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
               <StatusBadge status="REJECTED" text="Bị từ chối" />
-              <span 
-                title={`Lý do từ chối: ${row.rejectReason || 'Không rõ lý do'}`} 
-                style={{ cursor: 'help', color: 'var(--danger)', display: 'inline-flex', alignItems: 'center' }}
-              >
-                <HelpCircle size={14} />
-              </span>
+              {row.rejectReason && (
+                <span 
+                  style={{ 
+                    fontSize: '0.725rem', 
+                    color: 'var(--danger)', 
+                    fontStyle: 'italic', 
+                    whiteSpace: 'normal', 
+                    wordBreak: 'break-all', 
+                    maxWidth: '180px',
+                    display: 'block' 
+                  }}
+                  title={row.rejectReason}
+                >
+                  Lý do: {row.rejectReason}
+                </span>
+              )}
             </div>
           );
         } else {
@@ -238,7 +281,45 @@ const InsuranceApprovals = () => {
                 <X size={14} />
                 <span>Từ chối</span>
               </button>
+              {user?.role === 'ROLE_ADMIN' && (
+                <button 
+                  onClick={() => handleDeleteClick(row.id)}
+                  className="btn btn-secondary"
+                  style={{
+                    color: 'var(--danger)',
+                    borderColor: 'var(--danger)',
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    height: '28px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  Xóa
+                </button>
+              )}
             </div>
+          );
+        }
+        if (user?.role === 'ROLE_ADMIN') {
+          return (
+            <button 
+              onClick={() => handleDeleteClick(row.id)}
+              className="btn btn-secondary"
+              style={{
+                color: 'var(--danger)',
+                borderColor: 'var(--danger)',
+                padding: '4px 10px',
+                fontSize: '0.75rem',
+                height: '28px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              Xóa yêu cầu
+            </button>
           );
         }
         return <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Đã xử lý</span>;
@@ -330,6 +411,21 @@ const InsuranceApprovals = () => {
         onCancel={() => {
           setIsApproveConfirmOpen(false);
           setSelectedApproveId(null);
+        }}
+      />
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog 
+        isOpen={isDeleteConfirmOpen}
+        title="Xác nhận xóa đăng ký bảo hiểm"
+        message="Bạn có chắc chắn muốn xóa yêu cầu đăng ký bảo hiểm này khỏi hệ thống không? Hành động này sẽ xóa vĩnh viễn và không thể khôi phục."
+        confirmText={deleting ? "Đang xóa..." : "Xóa vĩnh viễn"}
+        cancelText="Hủy"
+        type="danger"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setIsDeleteConfirmOpen(false);
+          setSelectedDeleteId(null);
         }}
       />
 

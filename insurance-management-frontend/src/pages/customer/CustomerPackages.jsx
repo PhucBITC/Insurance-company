@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
   DollarSign, 
@@ -17,6 +18,7 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import Toast from '../../components/Toast';
 
 const CustomerPackages = () => {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
@@ -25,6 +27,10 @@ const CustomerPackages = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [registering, setRegistering] = useState(false);
+
+  // Duplicate alert modal state
+  const [isDuplicateOpen, setIsDuplicateOpen] = useState(false);
+  const [duplicateInfoMessage, setDuplicateInfoMessage] = useState('');
 
   const fetchPackages = async () => {
     setLoading(true);
@@ -69,7 +75,13 @@ const CustomerPackages = () => {
       if (err.response && err.response.data && err.response.data.message) {
         msg = err.response.data.message;
       }
-      showToast(msg, 'error');
+      // Nếu là lỗi đăng ký trùng lặp (chờ duyệt hoặc còn hạn), hiển thị modal thông báo ở giữa màn hình
+      if (msg.includes('đang chờ duyệt') || msg.includes('đang hoạt động') || msg.includes('trùng lặp') || msg.includes('đã đăng ký')) {
+        setDuplicateInfoMessage(msg + "\n\nBạn có muốn tham khảo các gói bảo hiểm khác không?");
+        setIsDuplicateOpen(true);
+      } else {
+        showToast(msg, 'error');
+      }
     } finally {
       setRegistering(false);
       setSelectedPackage(null);
@@ -214,6 +226,22 @@ const CustomerPackages = () => {
         onCancel={() => {
           setIsConfirmOpen(false);
           setSelectedPackage(null);
+        }}
+      />
+
+      {/* Duplicate Info Dialog */}
+      <ConfirmDialog 
+        isOpen={isDuplicateOpen}
+        title="Thông báo đăng ký"
+        message={duplicateInfoMessage}
+        confirmText="Mua gói khác"
+        cancelText="Xem hợp đồng của tôi"
+        onConfirm={() => {
+          setIsDuplicateOpen(false);
+        }}
+        onCancel={() => {
+          setIsDuplicateOpen(false);
+          navigate('/customer/my-insurances');
         }}
       />
 
