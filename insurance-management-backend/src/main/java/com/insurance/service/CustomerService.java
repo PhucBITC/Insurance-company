@@ -1,5 +1,6 @@
 package com.insurance.service;
 
+import com.insurance.dto.CustomerProfileRequestDto;
 import com.insurance.dto.CustomerRequestDto;
 import com.insurance.dto.CustomerResponseDto;
 import com.insurance.entity.ERole;
@@ -136,6 +137,38 @@ public class CustomerService {
             customer.getUser().setStatus("INACTIVE");
         }
         customerRepository.save(customer);
+    }
+
+    public CustomerResponseDto getCustomerProfile(Long userId) {
+        Customer customer = customerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hồ sơ khách hàng!"));
+        return convertToDto(customer);
+    }
+
+    public CustomerResponseDto updateCustomerProfile(Long userId, CustomerProfileRequestDto request) {
+        Customer customer = customerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hồ sơ khách hàng!"));
+
+        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Họ và tên không được để trống!");
+        }
+
+        if (request.getIdentityCard() != null && !request.getIdentityCard().trim().isEmpty()) {
+            if (!request.getIdentityCard().equals(customer.getIdentityCard()) &&
+                    customerRepository.existsByIdentityCard(request.getIdentityCard())) {
+                throw new RuntimeException("Lỗi: Số CMND/CCCD này đã được sử dụng bởi một khách hàng khác!");
+            }
+        }
+
+        customer.setFullName(request.getFullName());
+        customer.setPhoneNumber(request.getPhoneNumber());
+        customer.setAddress(request.getAddress());
+        customer.setDateOfBirth(request.getDateOfBirth());
+        customer.setGender(request.getGender());
+        customer.setIdentityCard(request.getIdentityCard());
+
+        Customer savedCustomer = customerRepository.save(customer);
+        return convertToDto(savedCustomer);
     }
 
     private CustomerResponseDto convertToDto(Customer customer) {

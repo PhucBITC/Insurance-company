@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Heart, 
   ShieldCheck, 
@@ -8,13 +8,89 @@ import {
   Send,
   MessageSquare,
   FileCheck,
-  AlertTriangle
+  AlertTriangle,
+  User,
+  Phone,
+  MapPin,
+  Calendar,
+  CreditCard,
+  Edit2
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import StatCard from '../../components/StatCard';
 import StatusBadge from '../../components/StatusBadge';
+import apiClient from '../../api/apiClient';
+import Toast from '../../components/Toast';
 
 const CustomerDashboard = () => {
+  const [profile, setProfile] = useState({
+    fullName: '',
+    phoneNumber: '',
+    address: '',
+    dateOfBirth: '',
+    gender: 'Nam',
+    identityCard: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get('/api/customer/profile');
+      if (res.data) {
+        setProfile({
+          fullName: res.data.fullName || '',
+          phoneNumber: res.data.phoneNumber || '',
+          address: res.data.address || '',
+          dateOfBirth: res.data.dateOfBirth || '',
+          gender: res.data.gender || 'Nam',
+          identityCard: res.data.identityCard || ''
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Không thể tải thông tin hồ sơ của bạn.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    if (!profile.fullName.trim()) {
+      showToast('Họ và tên không được để trống!', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await apiClient.put('/api/customer/profile', profile);
+      showToast('Cập nhật hồ sơ cá nhân thành công!', 'success');
+      setIsEditing(false);
+      fetchProfile();
+    } catch (err) {
+      console.error(err);
+      let msg = 'Không thể cập nhật thông tin hồ sơ.';
+      if (err.response && err.response.data && err.response.data.message) {
+        msg = err.response.data.message;
+      }
+      showToast(msg, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const actionButtons = (
     <button className="btn btn-primary" style={{ height: '38px', gap: '6px' }}>
       <Sparkles size={14} />
@@ -70,6 +146,169 @@ const CustomerDashboard = () => {
           trendType="up"
           description="employee@insurance.com"
         />
+      </div>
+
+      {/* Hồ sơ cá nhân Card */}
+      <div className="saas-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid var(--border)', 
+          paddingBottom: '12px'
+        }}>
+          <h3 style={{ 
+            fontSize: '1rem', 
+            fontWeight: '600', 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: '8px',
+            margin: 0
+          }}>
+            <User size={18} style={{ color: 'var(--primary)' }} />
+            Thông tin hồ sơ cá nhân
+          </h3>
+          {!isEditing && (
+            <button 
+              onClick={() => setIsEditing(true)} 
+              className="btn btn-secondary" 
+              style={{ height: '32px', padding: '0 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Edit2 size={12} />
+              Chỉnh sửa
+            </button>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '10px 0' }}>Đang tải thông tin hồ sơ...</div>
+        ) : isEditing ? (
+          <form onSubmit={handleProfileSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Họ và tên <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <input 
+                type="text" 
+                name="fullName" 
+                className="form-input" 
+                value={profile.fullName} 
+                onChange={(e) => setProfile(prev => ({ ...prev, fullName: e.target.value }))}
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số điện thoại</label>
+              <input 
+                type="text" 
+                name="phoneNumber" 
+                className="form-input" 
+                value={profile.phoneNumber} 
+                onChange={(e) => setProfile(prev => ({ ...prev, phoneNumber: e.target.value }))} 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số CMND/CCCD</label>
+              <input 
+                type="text" 
+                name="identityCard" 
+                className="form-input" 
+                value={profile.identityCard} 
+                onChange={(e) => setProfile(prev => ({ ...prev, identityCard: e.target.value }))} 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Ngày sinh</label>
+              <input 
+                type="date" 
+                name="dateOfBirth" 
+                className="form-input" 
+                value={profile.dateOfBirth} 
+                onChange={(e) => setProfile(prev => ({ ...prev, dateOfBirth: e.target.value }))} 
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Giới tính</label>
+              <select 
+                name="gender" 
+                className="form-input" 
+                value={profile.gender} 
+                onChange={(e) => setProfile(prev => ({ ...prev, gender: e.target.value }))}
+              >
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Địa chỉ liên hệ</label>
+              <input 
+                type="text" 
+                name="address" 
+                className="form-input" 
+                value={profile.address} 
+                onChange={(e) => setProfile(prev => ({ ...prev, address: e.target.value }))} 
+              />
+            </div>
+            <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button 
+                type="button" 
+                onClick={() => { setIsEditing(false); fetchProfile(); }} 
+                className="btn btn-secondary" 
+                style={{ height: '36px' }}
+                disabled={saving}
+              >
+                Hủy
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                style={{ height: '36px' }}
+                disabled={saving}
+              >
+                {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', padding: '5px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <User size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Họ và tên</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>{profile.fullName || '---'}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Phone size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Số điện thoại</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>{profile.phoneNumber || '---'}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <CreditCard size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Số CMND/CCCD</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>{profile.identityCard || '---'}</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Calendar size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Ngày sinh / Giới tính</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                  {profile.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString('vi-VN') : '---'} ({profile.gender})
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', gridColumn: '1 / -1' }}>
+              <MapPin size={16} style={{ color: 'var(--text-muted)' }} />
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Địa chỉ liên hệ</div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--text-main)' }}>{profile.address || '---'}</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Details Grid */}
@@ -255,6 +494,27 @@ const CustomerDashboard = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Toast Overlay Container */}
+      <div style={{
+        position: 'fixed',
+        top: '24px',
+        right: '24px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        pointerEvents: 'none'
+      }}>
+        {toasts.map(toast => (
+          <Toast 
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+          />
+        ))}
       </div>
     </div>
   );

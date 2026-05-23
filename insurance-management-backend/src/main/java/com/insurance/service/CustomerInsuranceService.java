@@ -44,6 +44,16 @@ public class CustomerInsuranceService {
             throw new RuntimeException("Lỗi: Gói bảo hiểm hiện tại không ở trạng thái hoạt động!");
         }
 
+        // Kiểm tra hồ sơ đầy đủ thông tin trước khi đăng ký bảo hiểm
+        if (customer.getFullName() == null || customer.getFullName().trim().isEmpty() || "Khách Hàng Mới".equals(customer.getFullName().trim()) ||
+            customer.getPhoneNumber() == null || customer.getPhoneNumber().trim().isEmpty() ||
+            customer.getAddress() == null || customer.getAddress().trim().isEmpty() ||
+            customer.getDateOfBirth() == null ||
+            customer.getGender() == null || customer.getGender().trim().isEmpty() ||
+            customer.getIdentityCard() == null || customer.getIdentityCard().trim().isEmpty()) {
+            throw new RuntimeException("Lỗi: Vui lòng cập nhật đầy đủ thông tin cá nhân (Họ tên, SĐT, Địa chỉ, Ngày sinh, Giới tính, CMND/CCCD) tại Trang cá nhân trước khi đăng ký mua gói bảo hiểm!");
+        }
+
         CustomerInsurance customerInsurance = new CustomerInsurance();
         customerInsurance.setCustomer(customer);
         customerInsurance.setInsurancePackage(insurancePackage);
