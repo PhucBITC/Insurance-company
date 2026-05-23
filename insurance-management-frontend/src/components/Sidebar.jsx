@@ -34,7 +34,8 @@ const Sidebar = ({ isSidebarOpen, navItems = [], user }) => {
       zIndex: 50,
       height: '100vh',
       position: 'sticky',
-      top: 0
+      top: 0,
+      flexShrink: 0
     }}>
       {/* Brand Header */}
       <div style={{

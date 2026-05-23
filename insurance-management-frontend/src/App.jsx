@@ -23,6 +23,7 @@ import CustomerPackages from './pages/customer/CustomerPackages';
 import MyInsurances from './pages/customer/MyInsurances';
 import MyIncidentReports from './pages/customer/MyIncidentReports';
 import IncidentReportsManagement from './pages/employee/IncidentReportsManagement';
+import ChatbotAssistant from './pages/customer/ChatbotAssistant';
 
 
 // Helper redirect component for root "/"
@@ -109,7 +110,7 @@ function App() {
               <Route path="packages" element={<CustomerPackages />} />
               <Route path="my-insurances" element={<MyInsurances />} />
               <Route path="reports" element={<MyIncidentReports />} />
-              <Route path="chatbot" element={<PlaceholderPage title="Trợ lý ảo AI Chatbot" desc="Hỏi đáp thông minh về điều khoản bảo hiểm, hướng dẫn thủ tục bồi thường tự động qua tài liệu nội bộ PDF." />} />
+              <Route path="chatbot" element={<ChatbotAssistant />} />
             </Route>
 
             {/* Fallback to Root */}
