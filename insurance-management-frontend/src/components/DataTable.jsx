@@ -20,10 +20,12 @@ const DataTable = ({
 
   // Ensure current page is within valid range
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    } else if (currentPage < 1) {
-      setCurrentPage(1);
+    if (data && data.length > 0) {
+      if (currentPage > totalPages) {
+        setCurrentPage(totalPages);
+      } else if (currentPage < 1) {
+        setCurrentPage(1);
+      }
     }
   }, [data.length, totalPages, currentPage, setCurrentPage]);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatusBadge = ({ status, variant }) => {
+const StatusBadge = ({ status, variant, text }) => {
   const normalized = status ? status.toUpperCase().trim() : 'ACTIVE';
 
   const getStyle = () => {
@@ -72,6 +72,7 @@ const StatusBadge = ({ status, variant }) => {
   };
 
   const badgeStyle = getStyle();
+  const displayText = text || badgeStyle.text;
 
   if (variant === 'text') {
     return (
@@ -80,7 +81,7 @@ const StatusBadge = ({ status, variant }) => {
         fontWeight: '600',
         fontSize: '0.85rem'
       }}>
-        {badgeStyle.text}
+        {displayText}
       </span>
     );
   }
@@ -91,7 +92,7 @@ const StatusBadge = ({ status, variant }) => {
       color: badgeStyle.color,
       border: `1px solid ${badgeStyle.border}`
     }}>
-      {badgeStyle.text}
+      {displayText}
     </span>
   );
 };

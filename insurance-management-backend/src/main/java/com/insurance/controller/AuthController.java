@@ -8,6 +8,8 @@ import com.insurance.entity.ERole;
 import com.insurance.entity.Role;
 import com.insurance.entity.User;
 import com.insurance.repository.RoleRepository;
+import com.insurance.entity.Customer;
+import com.insurance.repository.CustomerRepository;
 import com.insurance.repository.UserRepository;
 import com.insurance.security.JwtTokenProvider;
 import com.insurance.security.UserDetailsImpl;
@@ -41,6 +43,9 @@ public class AuthController {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private CustomerRepository customerRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequest) {
@@ -89,6 +94,13 @@ public class AuthController {
         user.setRole(userRole);
 
         userRepository.save(user);
+
+        // Auto-create a default customer profile for the registered user
+        Customer customer = new Customer();
+        customer.setCustomerCode("CUS-" + (System.currentTimeMillis() % 1000000));
+        customer.setFullName("Khách Hàng Mới");
+        customer.setUser(user);
+        customerRepository.save(customer);
 
         return ResponseEntity.ok(new MessageResponse("Đăng ký tài khoản thành công!"));
     }

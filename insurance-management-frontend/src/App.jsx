@@ -14,8 +14,13 @@ import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import PackagesManagement from './pages/admin/PackagesManagement';
+import InsuranceApprovals from './pages/admin/InsuranceApprovals';
+import AssignmentsManagement from './pages/admin/AssignmentsManagement';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
+import MyCustomers from './pages/employee/MyCustomers';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
+import CustomerPackages from './pages/customer/CustomerPackages';
+import MyInsurances from './pages/customer/MyInsurances';
 
 
 // Helper redirect component for root "/"
@@ -74,7 +79,8 @@ function App() {
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="users" element={<UsersManagement />} />
               <Route path="packages" element={<PackagesManagement />} />
-              <Route path="assignments" element={<PlaceholderPage title="Phân công nhân sự" desc="Chức năng gán khách hàng đăng ký tham gia bảo hiểm cho một nhân viên cụ thể chăm sóc và giải quyết hồ sơ." />} />
+              <Route path="contracts" element={<InsuranceApprovals />} />
+              <Route path="assignments" element={<AssignmentsManagement />} />
               <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
             </Route>
 
@@ -85,7 +91,8 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="dashboard" element={<EmployeeDashboard />} />
-              <Route path="customers" element={<PlaceholderPage title="Danh sách khách hàng phụ trách" desc="Xem thông tin chi tiết và ghi chú chăm sóc đối với những khách hàng được quản trị viên phân công phụ trách." />} />
+              <Route path="customers" element={<MyCustomers />} />
+              <Route path="contracts" element={<InsuranceApprovals />} />
               <Route path="incidents" element={<PlaceholderPage title="Xử lý báo cáo sự cố" desc="Tiếp nhận, kiểm tra hồ sơ yêu cầu bồi thường bảo hiểm, cập nhật trạng thái duyệt/từ chối hồ sơ sự cố." />} />
             </Route>
 
@@ -96,8 +103,8 @@ function App() {
               </ProtectedRoute>
             }>
               <Route path="dashboard" element={<CustomerDashboard />} />
-              <Route path="packages" element={<PlaceholderPage title="Danh sách gói bảo hiểm" desc="Xem danh sách các gói bảo hiểm đang hoạt động của công ty và thực hiện đăng ký tham gia trực tuyến." />} />
-              <Route path="my-insurances" element={<PlaceholderPage title="Hợp đồng của tôi" desc="Theo dõi lịch sử tham gia, thông tin ngày bắt đầu, ngày kết thúc và hạn mức bồi thường của các hợp đồng đã ký." />} />
+              <Route path="packages" element={<CustomerPackages />} />
+              <Route path="my-insurances" element={<MyInsurances />} />
               <Route path="reports" element={<PlaceholderPage title="Báo cáo tai nạn / Sự cố" desc="Gửi báo cáo yêu cầu bồi thường (loại sự cố, mô tả sự cố, hình ảnh chứng minh) khi phát sinh tai nạn, ốm đau." />} />
               <Route path="chatbot" element={<PlaceholderPage title="Trợ lý ảo AI Chatbot" desc="Hỏi đáp thông minh về điều khoản bảo hiểm, hướng dẫn thủ tục bồi thường tự động qua tài liệu nội bộ PDF." />} />
             </Route>

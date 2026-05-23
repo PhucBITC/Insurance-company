@@ -104,3 +104,32 @@ INSERT INTO `insurance_packages` (`package_code`, `name`, `type`, `description`,
 ('PKG-LIFE-02', 'An Sinh Thịnh Vượng', 'LIFE', 'Bảo hiểm nhân thọ tích lũy tài chính cho gia đình trước các rủi ro lớn.', 5000000.0, 36, 500000000.0, 'Độ tuổi từ 18 đến 55, khám sức khỏe đạt yêu cầu.', 'ACTIVE'),
 ('PKG-VEHICLE-03', 'Bảo hiểm Ô tô An Tâm', 'VEHICLE', 'Bồi thường thiệt hại vật chất xe và trách nhiệm dân sự đối với bên thứ ba.', 2000000.0, 12, 150000000.0, 'Xe ô tô đăng ký hợp lệ, không quá 10 năm sử dụng.', 'ACTIVE');
 
+-- Create Customer Insurances (Contracts) Table
+CREATE TABLE `customer_insurances` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `customer_id` BIGINT NOT NULL,
+    `insurance_package_id` BIGINT NOT NULL,
+    `start_date` DATE,
+    `end_date` DATE,
+    `price` DOUBLE NOT NULL,
+    `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    `contract_code` VARCHAR(50) UNIQUE,
+    `reject_reason` TEXT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`insurance_package_id`) REFERENCES `insurance_packages` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create Customer Assignments Table
+CREATE TABLE `customer_assignments` (
+    `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+    `employee_id` BIGINT NOT NULL,
+    `customer_id` BIGINT NOT NULL,
+    `assigned_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_assignment` (`employee_id`, `customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
