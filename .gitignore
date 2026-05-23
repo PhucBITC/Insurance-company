@@ -17,3 +17,8 @@ logs/
 *.swp
 *.swo
 .DS_Store
+
+# Local environment variables
+.env
+**/.env
+
