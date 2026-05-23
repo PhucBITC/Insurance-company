@@ -22,11 +22,17 @@ public class CustomerAssignmentController {
     @Autowired
     private CustomerAssignmentService customerAssignmentService;
 
+    @Autowired
+    private com.insurance.service.SystemLogService systemLogService;
+
     @PostMapping("/admin/assignments")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> assignCustomer(@RequestBody CustomerAssignmentRequestDto request) {
+    public ResponseEntity<?> assignCustomer(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody CustomerAssignmentRequestDto request) {
         try {
             CustomerAssignmentResponseDto response = customerAssignmentService.assignCustomer(request);
+            systemLogService.log("Phân công nhân viên " + response.getEmployeeName() + " hỗ trợ khách hàng " + response.getCustomerName(), userDetails.getUsername(), "ROLE_ADMIN", "SUCCESS");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -41,9 +47,12 @@ public class CustomerAssignmentController {
 
     @DeleteMapping("/admin/assignments/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeAssignment(@PathVariable Long id) {
+    public ResponseEntity<?> removeAssignment(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long id) {
         try {
             customerAssignmentService.removeAssignment(id);
+            systemLogService.log("Admin hủy phân công chăm sóc ID: " + id, userDetails.getUsername(), "ROLE_ADMIN", "DANGER");
             return ResponseEntity.ok(new MessageResponse("Hủy phân công chăm sóc thành công!"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));

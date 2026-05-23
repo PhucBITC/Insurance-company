@@ -22,6 +22,9 @@ public class IncidentReportController {
     @Autowired
     private IncidentReportService incidentReportService;
 
+    @Autowired
+    private com.insurance.service.SystemLogService systemLogService;
+
     // --- CUSTOMER ENDPOINTS ---
 
     @PostMapping("/customer/reports")
@@ -31,6 +34,7 @@ public class IncidentReportController {
             @RequestBody IncidentReportRequestDto request) {
         try {
             IncidentReportResponseDto response = incidentReportService.createReport(userDetails.getId(), request);
+            systemLogService.log("Khách hàng khai báo sự cố mới: " + response.getTitle() + " (Mã báo cáo: " + response.getReportCode() + ") cho hợp đồng " + response.getContractCode(), userDetails.getUsername(), "ROLE_CUSTOMER", "SUCCESS");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -55,6 +59,7 @@ public class IncidentReportController {
             @PathVariable Long id) {
         try {
             incidentReportService.deleteReportByCustomer(userDetails.getId(), id);
+            systemLogService.log("Khách hàng hủy/xóa báo cáo sự cố ID: " + id, userDetails.getUsername(), "ROLE_CUSTOMER", "DANGER");
             return ResponseEntity.ok(new MessageResponse("Hủy báo cáo sự cố thành công!"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -84,6 +89,8 @@ public class IncidentReportController {
             String status = payload.get("status");
             String rejectReason = payload.get("rejectReason");
             IncidentReportResponseDto response = incidentReportService.processReport(id, status, rejectReason, userDetails.getId());
+            String logStatus = "REJECTED".equals(response.getStatus()) ? "WARNING" : "SUCCESS";
+            systemLogService.log("Nhân viên cập nhật trạng thái báo cáo sự cố " + response.getReportCode() + " thành " + response.getStatus() + (response.getRejectReason() != null ? " (Lý do từ chối: " + response.getRejectReason() + ")" : ""), userDetails.getUsername(), "ROLE_EMPLOYEE", logStatus);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -113,6 +120,8 @@ public class IncidentReportController {
             String status = payload.get("status");
             String rejectReason = payload.get("rejectReason");
             IncidentReportResponseDto response = incidentReportService.processReport(id, status, rejectReason, userDetails.getId());
+            String logStatus = "REJECTED".equals(response.getStatus()) ? "WARNING" : "SUCCESS";
+            systemLogService.log("Admin cập nhật trạng thái báo cáo sự cố " + response.getReportCode() + " thành " + response.getStatus() + (response.getRejectReason() != null ? " (Lý do từ chối: " + response.getRejectReason() + ")" : ""), userDetails.getUsername(), "ROLE_ADMIN", logStatus);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -121,9 +130,12 @@ public class IncidentReportController {
 
     @DeleteMapping("/admin/reports/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteReportByAdmin(@PathVariable Long id) {
+    public ResponseEntity<?> deleteReportByAdmin(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable Long id) {
         try {
             incidentReportService.deleteReportByAdmin(id);
+            systemLogService.log("Admin xóa vĩnh viễn báo cáo sự cố ID: " + id, userDetails.getUsername(), "ROLE_ADMIN", "DANGER");
             return ResponseEntity.ok(new MessageResponse("Xóa báo cáo sự cố thành công!"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));

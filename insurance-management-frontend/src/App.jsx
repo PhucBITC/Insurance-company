@@ -24,6 +24,7 @@ import MyInsurances from './pages/customer/MyInsurances';
 import MyIncidentReports from './pages/customer/MyIncidentReports';
 import IncidentReportsManagement from './pages/employee/IncidentReportsManagement';
 import ChatbotAssistant from './pages/customer/ChatbotAssistant';
+import SystemLogsManagement from './pages/admin/SystemLogsManagement';
 
 
 // Helper redirect component for root "/"
@@ -85,7 +86,7 @@ function App() {
               <Route path="contracts" element={<InsuranceApprovals />} />
               <Route path="assignments" element={<AssignmentsManagement />} />
               <Route path="incidents" element={<IncidentReportsManagement />} />
-              <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
+              <Route path="logs" element={<SystemLogsManagement />} />
             </Route>
 
             {/* Employee Protected Routes */}

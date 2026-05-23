@@ -47,6 +47,9 @@ public class AuthController {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private com.insurance.service.SystemLogService systemLogService;
+
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequest) {
         try {
@@ -62,15 +65,20 @@ public class AuthController {
                     .map(GrantedAuthority::getAuthority)
                     .orElse("ROLE_CUSTOMER");
 
+            systemLogService.log("Đăng nhập hệ thống thành công", userDetails.getUsername(), role, "SUCCESS");
+
             return ResponseEntity.ok(new JwtResponseDto(jwt,
-                    userDetails.getId(),
-                    userDetails.getUsername(),
-                    role));
+                     userDetails.getId(),
+                     userDetails.getUsername(),
+                     role));
         } catch (org.springframework.security.authentication.DisabledException e) {
+            systemLogService.log("Đăng nhập thất bại: Tài khoản bị ngưng hoạt động", loginRequest.getEmail(), "UNKNOWN", "WARNING");
             return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Tài khoản của bạn đã bị ngưng hoạt động!"));
         } catch (org.springframework.security.authentication.LockedException e) {
+            systemLogService.log("Đăng nhập thất bại: Tài khoản bị khóa", loginRequest.getEmail(), "UNKNOWN", "WARNING");
             return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Tài khoản của bạn đã bị khóa!"));
         } catch (org.springframework.security.core.AuthenticationException e) {
+            systemLogService.log("Đăng nhập thất bại: Sai email hoặc mật khẩu", loginRequest.getEmail(), "UNKNOWN", "DANGER");
             return ResponseEntity.status(401).body(new MessageResponse("Lỗi: Email hoặc mật khẩu không chính xác!"));
         }
     }
@@ -101,6 +109,8 @@ public class AuthController {
         customer.setFullName("Khách Hàng Mới");
         customer.setUser(user);
         customerRepository.save(customer);
+
+        systemLogService.log("Đăng ký tài khoản khách hàng mới thành công: " + signUpRequest.getEmail(), signUpRequest.getEmail(), "ROLE_CUSTOMER", "SUCCESS");
 
         return ResponseEntity.ok(new MessageResponse("Đăng ký tài khoản thành công!"));
     }

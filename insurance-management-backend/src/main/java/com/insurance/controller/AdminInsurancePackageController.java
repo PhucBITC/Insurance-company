@@ -21,6 +21,9 @@ public class AdminInsurancePackageController {
     @Autowired
     private InsurancePackageService insurancePackageService;
 
+    @Autowired
+    private com.insurance.service.SystemLogService systemLogService;
+
     @GetMapping
     public ResponseEntity<List<InsurancePackageResponseDto>> getAllPackages() {
         return ResponseEntity.ok(insurancePackageService.getAllPackages());
@@ -32,9 +35,12 @@ public class AdminInsurancePackageController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createPackage(@Valid @RequestBody InsurancePackageRequestDto request) {
+    public ResponseEntity<?> createPackage(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.insurance.security.UserDetailsImpl userDetails,
+            @Valid @RequestBody InsurancePackageRequestDto request) {
         try {
             InsurancePackageResponseDto response = insurancePackageService.createPackage(request);
+            systemLogService.log("Tạo mới gói bảo hiểm: " + request.getName() + " (" + response.getPackageCode() + ")", userDetails.getUsername(), "ROLE_ADMIN", "SUCCESS");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -42,9 +48,13 @@ public class AdminInsurancePackageController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePackage(@PathVariable Long id, @Valid @RequestBody InsurancePackageRequestDto request) {
+    public ResponseEntity<?> updatePackage(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.insurance.security.UserDetailsImpl userDetails,
+            @PathVariable Long id, 
+            @Valid @RequestBody InsurancePackageRequestDto request) {
         try {
             InsurancePackageResponseDto response = insurancePackageService.updatePackage(id, request);
+            systemLogService.log("Cập nhật gói bảo hiểm: " + request.getName() + " (" + response.getPackageCode() + ")", userDetails.getUsername(), "ROLE_ADMIN", "SUCCESS");
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -52,9 +62,13 @@ public class AdminInsurancePackageController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePackage(@PathVariable Long id) {
+    public ResponseEntity<?> deletePackage(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.insurance.security.UserDetailsImpl userDetails,
+            @PathVariable Long id) {
         try {
+            InsurancePackageResponseDto pkg = insurancePackageService.getPackageById(id);
             insurancePackageService.deletePackage(id);
+            systemLogService.log("Xóa gói bảo hiểm: " + (pkg != null ? pkg.getName() : "ID " + id), userDetails.getUsername(), "ROLE_ADMIN", "DANGER");
             return ResponseEntity.ok(new MessageResponse("Xóa gói bảo hiểm thành công!"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
