@@ -21,6 +21,8 @@ import MyCustomers from './pages/employee/MyCustomers';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
 import CustomerPackages from './pages/customer/CustomerPackages';
 import MyInsurances from './pages/customer/MyInsurances';
+import MyIncidentReports from './pages/customer/MyIncidentReports';
+import IncidentReportsManagement from './pages/employee/IncidentReportsManagement';
 
 
 // Helper redirect component for root "/"
@@ -81,6 +83,7 @@ function App() {
               <Route path="packages" element={<PackagesManagement />} />
               <Route path="contracts" element={<InsuranceApprovals />} />
               <Route path="assignments" element={<AssignmentsManagement />} />
+              <Route path="incidents" element={<IncidentReportsManagement />} />
               <Route path="logs" element={<PlaceholderPage title="Nhật ký hệ thống & Access logs" desc="Chức năng theo dõi toàn bộ lịch sử truy cập (Login/Logout) và lịch sử thao tác nghiệp vụ của nhân viên." />} />
             </Route>
 
@@ -93,7 +96,7 @@ function App() {
               <Route path="dashboard" element={<EmployeeDashboard />} />
               <Route path="customers" element={<MyCustomers />} />
               <Route path="contracts" element={<InsuranceApprovals />} />
-              <Route path="incidents" element={<PlaceholderPage title="Xử lý báo cáo sự cố" desc="Tiếp nhận, kiểm tra hồ sơ yêu cầu bồi thường bảo hiểm, cập nhật trạng thái duyệt/từ chối hồ sơ sự cố." />} />
+              <Route path="incidents" element={<IncidentReportsManagement />} />
             </Route>
 
             {/* Customer Protected Routes */}
@@ -105,7 +108,7 @@ function App() {
               <Route path="dashboard" element={<CustomerDashboard />} />
               <Route path="packages" element={<CustomerPackages />} />
               <Route path="my-insurances" element={<MyInsurances />} />
-              <Route path="reports" element={<PlaceholderPage title="Báo cáo tai nạn / Sự cố" desc="Gửi báo cáo yêu cầu bồi thường (loại sự cố, mô tả sự cố, hình ảnh chứng minh) khi phát sinh tai nạn, ốm đau." />} />
+              <Route path="reports" element={<MyIncidentReports />} />
               <Route path="chatbot" element={<PlaceholderPage title="Trợ lý ảo AI Chatbot" desc="Hỏi đáp thông minh về điều khoản bảo hiểm, hướng dẫn thủ tục bồi thường tự động qua tài liệu nội bộ PDF." />} />
             </Route>
 

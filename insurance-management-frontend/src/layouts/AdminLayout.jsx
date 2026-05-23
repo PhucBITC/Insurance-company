@@ -6,7 +6,8 @@ import {
   Shield, 
   FileText, 
   Activity,
-  FileCheck
+  FileCheck,
+  AlertTriangle
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -16,6 +17,7 @@ const AdminLayout = () => {
     { path: '/admin/packages', name: 'Gói bảo hiểm', icon: FileText },
     { path: '/admin/contracts', name: 'Duyệt yêu cầu gói', icon: FileCheck },
     { path: '/admin/assignments', name: 'Phân công nhân sự', icon: Users },
+    { path: '/admin/incidents', name: 'Sự cố bảo hiểm', icon: AlertTriangle },
     { path: '/admin/logs', name: 'Lịch sử hoạt động', icon: Activity },
   ];
 
