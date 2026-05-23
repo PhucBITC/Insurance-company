@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   FileText, 
@@ -13,6 +13,7 @@ import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import SearchFilterBar from '../../components/SearchFilterBar';
 import { useUI } from '../../context/UIContext';
+import apiClient from '../../api/apiClient';
 
 // Recharts imports
 import { 
@@ -29,76 +30,27 @@ const AdminDashboard = () => {
   const { t, language } = useUI();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
 
-  // Simulated chart data
-  const chartData = [
-    { name: 'T1', subscriptions: 12, revenue: 120000000 },
-    { name: 'T2', subscriptions: 19, revenue: 185000000 },
-    { name: 'T3', subscriptions: 15, revenue: 150000000 },
-    { name: 'T4', subscriptions: 28, revenue: 260000000 },
-    { name: 'T5', subscriptions: 34, revenue: 320000000 },
-    { name: 'T6', subscriptions: 45, revenue: 410000000 },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get('/api/admin/dashboard');
+      setData(res.data);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError(language === 'vi' ? 'Không thể tải dữ liệu thống kê từ hệ thống.' : 'Failed to load system metrics.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Simulated audit logs
-  const allLogs = [
-    { 
-      id: 1, 
-      action: language === 'vi' ? 'Tạo gói bảo hiểm "Gia Đình An Vui"' : 'Created insurance package "Happy Family"', 
-      user: 'admin@insurance.com', 
-      role: 'ROLE_ADMIN', 
-      time: language === 'vi' ? '10 phút trước' : '10 minutes ago', 
-      status: 'SUCCESS' 
-    },
-    { 
-      id: 2, 
-      action: language === 'vi' ? 'Đăng ký tài khoản khách hàng mới' : 'Registered new customer account', 
-      user: 'customer@insurance.com', 
-      role: 'ROLE_CUSTOMER', 
-      time: language === 'vi' ? '25 phút trước' : '25 minutes ago', 
-      status: 'SUCCESS' 
-    },
-    { 
-      id: 3, 
-      action: language === 'vi' ? 'Phân công khách hàng cho nhân viên' : 'Assigned customer to support employee', 
-      user: 'admin@insurance.com', 
-      role: 'ROLE_ADMIN', 
-      time: language === 'vi' ? '1 giờ trước' : '1 hour ago', 
-      status: 'SUCCESS' 
-    },
-    { 
-      id: 4, 
-      action: language === 'vi' ? 'Cập nhật trạng thái sự cố #SR-409' : 'Updated incident report #SR-409 status', 
-      user: 'employee@insurance.com', 
-      role: 'ROLE_EMPLOYEE', 
-      time: language === 'vi' ? '2 giờ trước' : '2 hours ago', 
-      status: 'WARNING' 
-    },
-    { 
-      id: 5, 
-      action: language === 'vi' ? 'Thử nghiệm truy cập API trái phép' : 'Unauthorized API access attempt', 
-      user: 'unknown@test.com', 
-      role: 'UNKNOWN', 
-      time: language === 'vi' ? '4 giờ trước' : '4 hours ago', 
-      status: 'DANGER' 
-    },
-    { 
-      id: 6, 
-      action: language === 'vi' ? 'Thay đổi cấu hình hệ thống bảo mật' : 'Modified security system configurations', 
-      user: 'admin@insurance.com', 
-      role: 'ROLE_ADMIN', 
-      time: language === 'vi' ? '1 ngày trước' : '1 day ago', 
-      status: 'SUCCESS' 
-    },
-  ];
-
-  // Filter & Search logic
-  const filteredLogs = allLogs.filter(log => {
-    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          log.user.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterRole === 'ALL' || log.role === filterRole;
-    return matchesSearch && matchesFilter;
-  });
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const headers = [
     { label: t('tableHeaderAction'), key: 'action' },
@@ -123,16 +75,55 @@ const AdminDashboard = () => {
 
   const actionButtons = (
     <>
-      <button className="btn btn-secondary" style={{ height: '38px', gap: '6px' }}>
+      <button 
+        onClick={fetchDashboardData} 
+        className="btn btn-secondary" 
+        style={{ height: '38px', gap: '6px' }}
+      >
         <RefreshCw size={14} />
         {t('refreshBtn')}
       </button>
-      <button className="btn btn-primary" style={{ height: '38px', gap: '6px' }}>
+      <button 
+        className="btn btn-primary" 
+        style={{ height: '38px', gap: '6px' }}
+        onClick={() => window.location.href = '/admin/packages'}
+      >
         <PlusCircle size={16} />
         {t('newPackageBtn')}
       </button>
     </>
   );
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px', color: 'var(--text-muted)', gap: '16px' }} className="animate-fade-in">
+        <RefreshCw className="animate-spin" size={24} />
+        <span>{language === 'vi' ? 'Đang tải dữ liệu dashboard...' : 'Loading dashboard metrics...'}</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="saas-card animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+        <p style={{ color: 'var(--danger)', fontWeight: '600' }}>{error}</p>
+        <button onClick={fetchDashboardData} className="btn btn-primary" style={{ height: '38px' }}>
+          {language === 'vi' ? 'Thử lại' : 'Retry'}
+        </button>
+      </div>
+    );
+  }
+
+  const chartData = data?.chartData || [];
+  const allLogs = data?.logs || [];
+
+  // Filter & Search logic
+  const filteredLogs = allLogs.filter(log => {
+    const matchesSearch = log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          log.user.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterRole === 'ALL' || log.role === filterRole;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }} className="animate-fade-in">
@@ -152,7 +143,7 @@ const AdminDashboard = () => {
       }}>
         <StatCard 
           title={t('statTotalUsers')} 
-          value="24" 
+          value={data?.totalUsers ?? 0} 
           icon={Users} 
           trend={t('statTotalUsersTrend')} 
           trendType="up"
@@ -160,7 +151,7 @@ const AdminDashboard = () => {
         />
         <StatCard 
           title={t('statActivePackages')} 
-          value="6" 
+          value={data?.activePackages ?? 0} 
           icon={FileText} 
           trend={t('statActivePackagesTrend')}
           trendType="up"
@@ -168,7 +159,7 @@ const AdminDashboard = () => {
         />
         <StatCard 
           title={t('statAssignments')} 
-          value="18" 
+          value={data?.totalAssignments ?? 0} 
           icon={UserCheck} 
           trend={t('statAssignmentsTrend')} 
           trendType="up"
@@ -176,7 +167,7 @@ const AdminDashboard = () => {
         />
         <StatCard 
           title={t('statPendingIncidents')} 
-          value="3" 
+          value={data?.pendingIncidents ?? 0} 
           icon={Activity} 
           trend={t('statPendingIncidentsTrend')} 
           trendType="down"

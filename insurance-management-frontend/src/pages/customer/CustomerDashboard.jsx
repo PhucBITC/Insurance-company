@@ -37,6 +37,10 @@ const CustomerDashboard = () => {
   const [toasts, setToasts] = useState([]);
   const [errors, setErrors] = useState({});
 
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState(null);
+
   const showToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -64,8 +68,23 @@ const CustomerDashboard = () => {
     }
   };
 
+  const fetchDashboardData = async () => {
+    try {
+      setDashboardLoading(true);
+      const res = await apiClient.get('/api/customer/dashboard');
+      setDashboardData(res.data);
+      setDashboardError(null);
+    } catch (err) {
+      console.error(err);
+      setDashboardError('Không thể tải dữ liệu tổng quan bảo hiểm.');
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
+    fetchDashboardData();
   }, []);
 
   const validateForm = () => {
@@ -182,35 +201,35 @@ const CustomerDashboard = () => {
       }}>
         <StatCard 
           title="HỢP ĐỒNG ĐANG HOẠT ĐỘNG" 
-          value="1 Gói" 
+          value={dashboardLoading ? '...' : `${dashboardData?.activePoliciesCount ?? 0} Gói`} 
           icon={ShieldCheck} 
-          trend="Đang bảo vệ" 
+          trend={dashboardData?.activePoliciesCount > 0 ? "Đang bảo vệ" : "Chưa bảo vệ"} 
           trendType="up"
-          description="Gói An Sinh Toàn Diện"
+          description={dashboardLoading ? '...' : (dashboardData?.latestContract?.hasContract ? dashboardData.latestContract.packageName : 'Không có gói active')}
         />
         <StatCard 
           title="YÊU CẦU BỒI THƯỜNG" 
-          value="0" 
+          value={dashboardLoading ? '...' : (dashboardData?.totalIncidentsCount ?? 0)} 
           icon={AlertTriangle} 
-          trend="Không có sự cố" 
+          trend={dashboardData?.totalIncidentsCount > 0 ? "Đang xử lý" : "Không có sự cố"} 
           trendType="up"
-          description="Hồ sơ bồi thường sạch"
+          description={dashboardLoading ? '...' : (dashboardData?.totalIncidentsCount > 0 ? 'Đã gửi báo cáo' : 'Hồ sơ bồi thường sạch')}
         />
         <StatCard 
           title="NGÀY ĐÓNG PHÍ KẾ TIẾP" 
-          value="01/01/2027" 
+          value={dashboardLoading ? '...' : (dashboardData?.nextPaymentDate || '---')} 
           icon={FileCheck} 
-          trend="Đã thanh toán" 
+          trend="Hằng năm" 
           trendType="up"
-          description="Đóng phí hàng năm"
+          description={dashboardLoading ? '...' : (dashboardData?.latestContract?.hasContract ? 'Gói gia hạn tự động' : 'Chưa tham gia')}
         />
         <StatCard 
           title="TƯ VẤN VIÊN RIÊNG" 
-          value="Nguyễn Văn B" 
+          value={dashboardLoading ? '...' : (dashboardData?.consultant?.hasConsultant ? dashboardData.consultant.fullName : 'Chưa phân công')} 
           icon={MessageSquare} 
-          trend="Đang trực tuyến" 
+          trend={dashboardData?.consultant?.hasConsultant ? "Đang trực tuyến" : "Ngoại tuyến"} 
           trendType="up"
-          description="employee@insurance.com"
+          description={dashboardLoading ? '...' : (dashboardData?.consultant?.hasConsultant ? dashboardData.consultant.email : 'Đang chờ phân công')}
         />
       </div>
 
@@ -423,49 +442,88 @@ const CustomerDashboard = () => {
             Chi tiết Hợp đồng Bảo hiểm Active
           </h3>
 
-          <div style={{
-            backgroundColor: 'var(--background)',
-            border: '1px solid var(--border)',
-            padding: '18px',
-            borderRadius: 'var(--radius-sm)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-              <div>
-                <StatusBadge status="ACTIVE" />
-                <h4 style={{ fontSize: '1rem', fontWeight: '700', marginTop: '8px', color: 'var(-- Saas-text-main, #0f172a)' }}>
-                  Gói An Sinh Toàn Diện Pro
-                </h4>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mã hợp đồng: #HD-92810</span>
-              </div>
-              <Heart size={24} style={{ color: 'var(--danger)', fill: 'rgba(220, 38, 38, 0.05)' }} />
-            </div>
-
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: '8px', 
-              fontSize: '0.85rem', 
-              color: '#334155',
-              borderTop: '1px solid var(--border)',
-              paddingTop: '12px'
+          {dashboardLoading ? (
+            <div style={{ padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Đang tải hợp đồng...</div>
+          ) : dashboardData?.latestContract?.hasContract ? (
+            <div style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+              padding: '18px',
+              borderRadius: 'var(--radius-sm)'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Ngày bắt đầu:</span>
-                <strong>01/01/2026</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div>
+                  <StatusBadge status="ACTIVE" />
+                  <h4 style={{ fontSize: '1rem', fontWeight: '700', marginTop: '8px', color: 'var(--Saas-text-main, #0f172a)' }}>
+                    {dashboardData.latestContract.packageName}
+                  </h4>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Mã hợp đồng: {dashboardData.latestContract.contractCode}</span>
+                </div>
+                <Heart size={24} style={{ color: 'var(--danger)', fill: 'rgba(220, 38, 38, 0.05)' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Ngày đáo hạn:</span>
-                <strong>01/01/2027</strong>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Hạn mức chi trả:</span>
-                <strong style={{ color: 'var(--primary)' }}>500,000,000đ</strong>
+
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '8px', 
+                fontSize: '0.85rem', 
+                color: '#334155',
+                borderTop: '1px solid var(--border)',
+                paddingTop: '12px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Ngày bắt đầu:</span>
+                  <strong>{new Date(dashboardData.latestContract.startDate).toLocaleDateString('vi-VN')}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Ngày đáo hạn:</span>
+                  <strong>{new Date(dashboardData.latestContract.endDate).toLocaleDateString('vi-VN')}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Hạn mức chi trả:</span>
+                  <strong style={{ color: 'var(--primary)' }}>
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dashboardData.latestContract.limit)}
+                  </strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Phí đóng gói:</span>
+                  <strong>
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dashboardData.latestContract.price)}
+                  </strong>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+              padding: '24px 18px',
+              borderRadius: 'var(--radius-sm)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <AlertTriangle size={32} style={{ color: 'var(--warning)', margin: '0 auto' }} />
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                Bạn chưa đăng ký hợp đồng bảo hiểm nào hoặc hợp đồng hiện tại chưa được kích hoạt (Active).
+              </p>
+              <button 
+                onClick={() => window.location.href = '/customer/packages'} 
+                className="btn btn-primary" 
+                style={{ height: '36px', width: 'fit-content', margin: '8px auto 0' }}
+              >
+                Mua gói bảo hiểm ngay
+              </button>
+            </div>
+          )}
 
-          <button className="btn btn-secondary" style={{ width: '100%', gap: '8px', height: '38px' }}>
-            <span>Xem điều khoản & Điều kiện bảo hiểm</span>
+          <button 
+            onClick={() => window.location.href = '/customer/my-insurances'} 
+            className="btn btn-secondary" 
+            style={{ width: '100%', gap: '8px', height: '38px' }}
+          >
+            <span>Quản lý danh sách Hợp đồng</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -485,50 +543,81 @@ const CustomerDashboard = () => {
             Tư vấn viên Chăm sóc của bạn
           </h3>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            backgroundColor: 'var(--background)',
-            padding: '16px',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border)'
-          }}>
-            <div style={{
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--primary)',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '700',
-              fontSize: '1rem'
-            }}>
-              NVB
-            </div>
-            <div>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '750', color: 'var(--text-main)' }}>Nguyễn Văn B (Staff)</h4>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>employee@insurance.com</p>
-              <div style={{ marginTop: '4px' }}>
-                <StatusBadge status="ROLE_EMPLOYEE" />
+          {dashboardLoading ? (
+            <div style={{ padding: '20px 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Đang tải tư vấn viên...</div>
+          ) : dashboardData?.consultant?.hasConsultant ? (
+            <>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                backgroundColor: 'var(--background)',
+                padding: '16px',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)'
+              }}>
+                <div style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: '700',
+                  fontSize: '1rem'
+                }}>
+                  {dashboardData.consultant.fullName.split(' ').filter(Boolean).map(n => n[0]).join('').toUpperCase().substring(0, 3)}
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: '750', color: 'var(--text-main)' }}>{dashboardData.consultant.fullName}</h4>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dashboardData.consultant.email}</p>
+                  <div style={{ marginTop: '4px' }}>
+                    <StatusBadge status="ROLE_EMPLOYEE" />
+                  </div>
+                </div>
               </div>
+
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div><strong>Mã nhân viên:</strong> {dashboardData.consultant.employeeCode}</div>
+                <div><strong>Số điện thoại:</strong> {dashboardData.consultant.phone}</div>
+                <p style={{ margin: '8px 0 0' }}>
+                  Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.
+                </p>
+              </div>
+
+              <button 
+                onClick={() => {
+                  showToast('Đang kết nối đến cổng tư vấn trực tiếp của ' + dashboardData.consultant.fullName + '...', 'info');
+                }} 
+                className="btn btn-primary" 
+                style={{ width: '100%', gap: '8px', height: '38px' }}
+              >
+                <Send size={14} />
+                <span>Gửi tin nhắn hỗ trợ trực tiếp</span>
+              </button>
+            </>
+          ) : (
+            <div style={{
+              backgroundColor: 'var(--background)',
+              border: '1px solid var(--border)',
+              padding: '24px 18px',
+              borderRadius: 'var(--radius-sm)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <MessageSquare size={32} style={{ color: 'var(--text-muted)', margin: '0 auto' }} />
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                Hệ thống chưa phân công Nhân viên tư vấn chăm sóc riêng cho bạn.
+              </p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
+                Nhân viên sẽ được gán tự động ngay khi bạn đăng ký gói bảo hiểm hoặc gửi yêu cầu báo cáo sự cố đầu tiên.
+              </p>
             </div>
-          </div>
-
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-            Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.
-          </p>
-
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-            Nhân viên tư vấn riêng chịu trách nhiệm giải thích các quyền lợi, hướng dẫn làm giấy tờ bồi thường khi bạn gặp sự cố và hỗ trợ tái ký hợp đồng.
-          </p>
-
-          <button className="btn btn-primary" style={{ width: '100%', gap: '8px', height: '38px' }}>
-            <Send size={14} />
-            <span>Gửi tin nhắn hỗ trợ trực tiếp</span>
-          </button>
+          )}
         </div>
       </div>
 

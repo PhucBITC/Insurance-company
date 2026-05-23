@@ -12,4 +12,9 @@ public interface IncidentReportRepository extends JpaRepository<IncidentReport, 
     List<IncidentReport> findByHandlerEmployeeIdOrderByCreatedAtDesc(Long employeeId);
     List<IncidentReport> findAllByOrderByCreatedAtDesc();
     boolean existsByReportCode(String reportCode);
+    long countByStatus(String status);
+    long countByHandlerEmployeeIdAndStatus(Long employeeId, String status);
+    long countByHandlerEmployeeIdAndStatusIn(Long employeeId, java.util.Collection<String> statuses);
+    long countByCustomerId(Long customerId);
+    long countByCustomerIdAndStatus(Long customerId, String status);
 }

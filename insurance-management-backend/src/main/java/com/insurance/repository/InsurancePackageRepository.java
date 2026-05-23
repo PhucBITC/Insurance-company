@@ -11,4 +11,5 @@ public interface InsurancePackageRepository extends JpaRepository<InsurancePacka
     Optional<InsurancePackage> findByPackageCode(String packageCode);
     boolean existsByPackageCode(String packageCode);
     List<InsurancePackage> findByStatus(String status);
+    long countByStatus(String status);
 }

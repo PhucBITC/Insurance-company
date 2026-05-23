@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   Users, 
@@ -14,6 +14,7 @@ import StatCard from '../../components/StatCard';
 import DataTable from '../../components/DataTable';
 import StatusBadge from '../../components/StatusBadge';
 import SearchFilterBar from '../../components/SearchFilterBar';
+import apiClient from '../../api/apiClient';
 
 // Recharts imports
 import { 
@@ -31,33 +32,27 @@ const EmployeeDashboard = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPackage, setFilterPackage] = useState('ALL');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
 
-  // Simulated chart data (Incidents processed)
-  const incidentStats = [
-    { name: 'Thứ 2', resolved: 4, processing: 2, pending: 1 },
-    { name: 'Thứ 3', resolved: 6, processing: 3, pending: 0 },
-    { name: 'Thứ 4', resolved: 5, processing: 1, pending: 2 },
-    { name: 'Thứ 5', resolved: 8, processing: 2, pending: 1 },
-    { name: 'Thứ 6', resolved: 7, processing: 4, pending: 0 },
-    { name: 'Thứ 7', resolved: 3, processing: 1, pending: 1 },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get('/api/employee/dashboard');
+      setData(res.data);
+      setError(null);
+    } catch (err) {
+      console.error(err);
+      setError('Không thể tải dữ liệu thống kê công việc của nhân viên.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Assigned customers data
-  const allCustomers = [
-    { id: 1, name: 'Nguyễn Văn A', email: 'customer@insurance.com', package: 'An Sinh Toàn Diện Pro', date: '01/01/2026', status: 'ACTIVE' },
-    { id: 2, name: 'Trần Thị B', email: 'tranthib@gmail.com', package: 'Sức Khỏe Vàng', date: '12/01/2026', status: 'ACTIVE' },
-    { id: 3, name: 'Phạm Văn C', email: 'phamvanc@gmail.com', package: 'Bảo Hiểm Xe Máy', date: '04/02/2026', status: 'PROCESSING' },
-    { id: 4, name: 'Lê Hoàng D', email: 'lehoangd@gmail.com', package: 'An Sinh Toàn Diện Pro', date: '19/02/2026', status: 'ACTIVE' },
-    { id: 5, name: 'Đặng Minh E', email: 'dangminhe@gmail.com', package: 'Chưa tham gia', date: 'Chưa thiết lập', status: 'PENDING' },
-  ];
-
-  // Filter & Search logic
-  const filteredCustomers = allCustomers.filter(cust => {
-    const matchesSearch = cust.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          cust.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterPackage === 'ALL' || cust.package === filterPackage;
-    return matchesSearch && matchesFilter;
-  });
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const headers = [
     { label: 'Tên Khách Hàng', key: 'name' },
@@ -81,11 +76,46 @@ const EmployeeDashboard = () => {
   };
 
   const actionButtons = (
-    <button className="btn btn-secondary" style={{ height: '38px', gap: '6px' }}>
+    <button 
+      onClick={fetchDashboardData} 
+      className="btn btn-secondary" 
+      style={{ height: '38px', gap: '6px' }}
+    >
       <RefreshCw size={14} />
       Làm mới công việc
     </button>
   );
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '400px', color: 'var(--text-muted)', gap: '16px' }} className="saas-fade-in">
+        <RefreshCw className="animate-spin" size={24} />
+        <span>Đang tải dữ liệu công việc nhân viên...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="saas-card saas-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+        <p style={{ color: 'var(--danger)', fontWeight: '600' }}>{error}</p>
+        <button onClick={fetchDashboardData} className="btn btn-primary" style={{ height: '38px' }}>
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
+  const incidentStats = data?.incidentStats || [];
+  const allCustomers = data?.customers || [];
+
+  // Filter & Search logic
+  const filteredCustomers = allCustomers.filter(cust => {
+    const matchesSearch = cust.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          cust.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterPackage === 'ALL' || cust.package === filterPackage;
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }} className="saas-fade-in">
@@ -105,7 +135,7 @@ const EmployeeDashboard = () => {
       }}>
         <StatCard 
           title="KHÁCH HÀNG PHỤ TRÁCH" 
-          value="8" 
+          value={data?.assignedCustomersCount ?? 0} 
           icon={Users} 
           trend="+2 trong tháng" 
           trendType="up"
@@ -113,7 +143,7 @@ const EmployeeDashboard = () => {
         />
         <StatCard 
           title="SỰ CỐ CẦN XỬ LÝ" 
-          value="2" 
+          value={data?.pendingIncidentsCount ?? 0} 
           icon={AlertTriangle} 
           trend="1 hồ sơ khẩn cấp" 
           trendType="down"
@@ -121,7 +151,7 @@ const EmployeeDashboard = () => {
         />
         <StatCard 
           title="ĐÃ GIẢI QUYẾT" 
-          value="14" 
+          value={data?.resolvedIncidentsCount ?? 0} 
           icon={CheckCircle} 
           trend="Đạt 96% mục tiêu" 
           trendType="up"
@@ -129,7 +159,7 @@ const EmployeeDashboard = () => {
         />
         <StatCard 
           title="LỊCH HẸN TƯ VẤN" 
-          value="3" 
+          value={data?.consultations ?? 0} 
           icon={Calendar} 
           trend="Hôm nay có 1 lịch" 
           trendType="up"

@@ -17,4 +17,8 @@ public interface CustomerInsuranceRepository extends JpaRepository<CustomerInsur
             "AND ci.insurancePackage.id = ?2 " +
             "AND (ci.status = 'PENDING' OR (ci.status = 'APPROVED' AND ci.endDate >= ?3))")
     boolean hasActiveOrPendingInsurance(Long customerId, Long packageId, java.time.LocalDate today);
+
+    long countByStatus(String status);
+    long countByCustomerIdAndStatus(Long customerId, String status);
+    List<CustomerInsurance> findByCustomerIdAndStatusOrderByCreatedAtDesc(Long customerId, String status);
 }
