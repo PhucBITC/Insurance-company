@@ -35,6 +35,7 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [errors, setErrors] = useState({});
 
   const showToast = (message, type = 'success') => {
     const id = Date.now();
@@ -67,10 +68,49 @@ const CustomerDashboard = () => {
     fetchProfile();
   }, []);
 
+  const validateForm = () => {
+    const errs = {};
+    
+    // Họ tên
+    if (!profile.fullName || !profile.fullName.trim()) {
+      errs.fullName = 'Họ và tên là bắt buộc';
+    } else if (profile.fullName.trim().length < 2) {
+      errs.fullName = 'Họ và tên phải có ít nhất 2 ký tự';
+    } else if (profile.fullName.trim() === 'Khách Hàng Mới') {
+      errs.fullName = 'Vui lòng cập nhật họ tên thật của bạn';
+    }
+
+    // Số điện thoại
+    if (profile.phoneNumber && profile.phoneNumber.trim()) {
+      if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(profile.phoneNumber.trim())) {
+        errs.phoneNumber = 'Số điện thoại không hợp lệ (phải gồm 10 chữ số, VD: 0912345678)';
+      }
+    }
+
+    // CMND/CCCD
+    if (profile.identityCard && profile.identityCard.trim()) {
+      if (!/^[0-9]{9}$|^[0-9]{12}$/.test(profile.identityCard.trim())) {
+        errs.identityCard = 'Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)';
+      }
+    }
+
+    // Ngày sinh
+    if (profile.dateOfBirth) {
+      const today = new Date();
+      const dob = new Date(profile.dateOfBirth);
+      if (dob > today) {
+        errs.dateOfBirth = 'Ngày sinh không được ở tương lai';
+      }
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
-    if (!profile.fullName.trim()) {
-      showToast('Họ và tên không được để trống!', 'error');
+    if (!validateForm()) {
+      showToast('Vui lòng kiểm tra lại thông tin nhập vào!', 'error');
       return;
     }
     setSaving(true);
@@ -79,6 +119,7 @@ const CustomerDashboard = () => {
       showToast('Cập nhật hồ sơ cá nhân thành công!', 'success');
       setIsEditing(false);
       fetchProfile();
+      setErrors({});
     } catch (err) {
       console.error(err);
       let msg = 'Không thể cập nhật thông tin hồ sơ.';
@@ -189,41 +230,57 @@ const CustomerDashboard = () => {
               <input 
                 type="text" 
                 name="fullName" 
-                className="form-input" 
+                className={`form-input ${errors.fullName ? 'border-danger' : ''}`} 
                 value={profile.fullName} 
-                onChange={(e) => setProfile(prev => ({ ...prev, fullName: e.target.value }))}
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, fullName: e.target.value }));
+                  if (errors.fullName) setErrors(prev => ({ ...prev, fullName: '' }));
+                }}
                 required 
               />
+              {errors.fullName && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.fullName}</span>}
             </div>
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số điện thoại</label>
               <input 
                 type="text" 
                 name="phoneNumber" 
-                className="form-input" 
+                className={`form-input ${errors.phoneNumber ? 'border-danger' : ''}`} 
                 value={profile.phoneNumber} 
-                onChange={(e) => setProfile(prev => ({ ...prev, phoneNumber: e.target.value }))} 
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, phoneNumber: e.target.value }));
+                  if (errors.phoneNumber) setErrors(prev => ({ ...prev, phoneNumber: '' }));
+                }} 
               />
+              {errors.phoneNumber && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.phoneNumber}</span>}
             </div>
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Số CMND/CCCD</label>
               <input 
                 type="text" 
                 name="identityCard" 
-                className="form-input" 
+                className={`form-input ${errors.identityCard ? 'border-danger' : ''}`} 
                 value={profile.identityCard} 
-                onChange={(e) => setProfile(prev => ({ ...prev, identityCard: e.target.value }))} 
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, identityCard: e.target.value }));
+                  if (errors.identityCard) setErrors(prev => ({ ...prev, identityCard: '' }));
+                }} 
               />
+              {errors.identityCard && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.identityCard}</span>}
             </div>
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Ngày sinh</label>
               <input 
                 type="date" 
                 name="dateOfBirth" 
-                className="form-input" 
+                className={`form-input ${errors.dateOfBirth ? 'border-danger' : ''}`} 
                 value={profile.dateOfBirth} 
-                onChange={(e) => setProfile(prev => ({ ...prev, dateOfBirth: e.target.value }))} 
+                onChange={(e) => {
+                  setProfile(prev => ({ ...prev, dateOfBirth: e.target.value }));
+                  if (errors.dateOfBirth) setErrors(prev => ({ ...prev, dateOfBirth: '' }));
+                }} 
               />
+              {errors.dateOfBirth && <span style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>{errors.dateOfBirth}</span>}
             </div>
             <div className="form-group">
               <label className="form-label" style={{ fontWeight: '500', fontSize: '0.85rem', color: 'var(--text-main)' }}>Giới tính</label>
@@ -251,7 +308,7 @@ const CustomerDashboard = () => {
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
               <button 
                 type="button" 
-                onClick={() => { setIsEditing(false); fetchProfile(); }} 
+                onClick={() => { setIsEditing(false); fetchProfile(); setErrors({}); }} 
                 className="btn btn-secondary" 
                 style={{ height: '36px' }}
                 disabled={saving}

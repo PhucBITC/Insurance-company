@@ -153,19 +153,38 @@ public class CustomerService {
             throw new RuntimeException("Lỗi: Họ và tên không được để trống!");
         }
 
+        if ("Khách Hàng Mới".equals(request.getFullName().trim())) {
+            throw new RuntimeException("Lỗi: Vui lòng cập nhật họ và tên thật của bạn!");
+        }
+
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            if (!request.getPhoneNumber().trim().matches("^(0[3|5|7|8|9])[0-9]{8}$")) {
+                throw new RuntimeException("Lỗi: Số điện thoại không hợp lệ (phải gồm 10 chữ số, bắt đầu bằng 03/05/07/08/09)!");
+            }
+        }
+
         if (request.getIdentityCard() != null && !request.getIdentityCard().trim().isEmpty()) {
+            if (!request.getIdentityCard().trim().matches("^[0-9]{9}$|^[0-9]{12}$")) {
+                throw new RuntimeException("Lỗi: Số CMND/CCCD không hợp lệ (phải gồm 9 hoặc 12 chữ số)!");
+            }
             if (!request.getIdentityCard().equals(customer.getIdentityCard()) &&
                     customerRepository.existsByIdentityCard(request.getIdentityCard())) {
                 throw new RuntimeException("Lỗi: Số CMND/CCCD này đã được sử dụng bởi một khách hàng khác!");
             }
         }
 
-        customer.setFullName(request.getFullName());
-        customer.setPhoneNumber(request.getPhoneNumber());
-        customer.setAddress(request.getAddress());
+        if (request.getDateOfBirth() != null) {
+            if (request.getDateOfBirth().isAfter(java.time.LocalDate.now())) {
+                throw new RuntimeException("Lỗi: Ngày sinh không được ở tương lai!");
+            }
+        }
+
+        customer.setFullName(request.getFullName().trim());
+        customer.setPhoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null);
+        customer.setAddress(request.getAddress() != null ? request.getAddress().trim() : null);
         customer.setDateOfBirth(request.getDateOfBirth());
         customer.setGender(request.getGender());
-        customer.setIdentityCard(request.getIdentityCard());
+        customer.setIdentityCard(request.getIdentityCard() != null ? request.getIdentityCard().trim() : null);
 
         Customer savedCustomer = customerRepository.save(customer);
         return convertToDto(savedCustomer);
