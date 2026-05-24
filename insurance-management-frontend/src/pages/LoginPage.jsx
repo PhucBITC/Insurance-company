@@ -244,7 +244,7 @@ const LoginPage = () => {
               <Lock size={16} className="input-field-icon" />
             </div>
 
-            <a href="#" onClick={(e) => e.preventDefault()}>Quên mật khẩu?</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>Quên mật khẩu?</a>
             <button type="submit" disabled={isLoginSubmitting}>
               {isLoginSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>

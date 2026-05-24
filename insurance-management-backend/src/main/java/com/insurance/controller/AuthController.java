@@ -11,6 +11,8 @@ import com.insurance.repository.RoleRepository;
 import com.insurance.entity.Customer;
 import com.insurance.repository.CustomerRepository;
 import com.insurance.repository.UserRepository;
+import com.insurance.repository.PasswordResetTokenRepository;
+import com.insurance.service.EmailService;
 import com.insurance.security.JwtTokenProvider;
 import com.insurance.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -113,5 +115,82 @@ public class AuthController {
         systemLogService.log("Đăng ký tài khoản khách hàng mới thành công: " + signUpRequest.getEmail(), signUpRequest.getEmail(), "ROLE_CUSTOMER", "SUCCESS");
 
         return ResponseEntity.ok(new MessageResponse("Đăng ký tài khoản thành công!"));
+    }
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Email không được trống!"));
+        }
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ResponseEntity.ok(new MessageResponse("Nếu email tồn tại trên hệ thống, liên kết đặt lại mật khẩu đã được gửi!"));
+        }
+
+        // Delete existing token if any
+        passwordResetTokenRepository.findByUserId(user.getId())
+                .ifPresent(t -> passwordResetTokenRepository.delete(t));
+
+        // Create new token
+        String token = java.util.UUID.randomUUID().toString();
+        com.insurance.entity.PasswordResetToken resetToken = new com.insurance.entity.PasswordResetToken();
+        resetToken.setUser(user);
+        resetToken.setToken(token);
+        resetToken.setExpiryDate(java.time.LocalDateTime.now().plusMinutes(15));
+        
+        passwordResetTokenRepository.save(resetToken);
+
+        // Send email
+        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+
+        systemLogService.log("Yêu cầu đặt lại mật khẩu thành công cho email: " + email, email, user.getRole().getName().toString(), "SUCCESS");
+
+        return ResponseEntity.ok(new MessageResponse("Đã gửi link đặt lại mật khẩu thành công!"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody java.util.Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+
+        if (token == null || token.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Token đặt lại mật khẩu không hợp lệ!"));
+        }
+
+        if (newPassword == null || newPassword.trim().length() < 6) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Mật khẩu mới phải có tối thiểu 6 ký tự!"));
+        }
+
+        com.insurance.entity.PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+                .orElse(null);
+
+        if (resetToken == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!"));
+        }
+
+        if (resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken);
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Liên kết đặt lại mật khẩu đã hết hạn!"));
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Delete token
+        passwordResetTokenRepository.delete(resetToken);
+
+        systemLogService.log("Đặt lại mật khẩu thành công bằng token", user.getEmail(), user.getRole().getName().toString(), "SUCCESS");
+
+        return ResponseEntity.ok(new MessageResponse("Đặt lại mật khẩu thành công!"));
     }
 }

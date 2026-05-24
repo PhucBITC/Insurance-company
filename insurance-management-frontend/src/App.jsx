@@ -27,6 +27,8 @@ import ChatbotAssistant from './pages/customer/ChatbotAssistant';
 import SystemLogsManagement from './pages/admin/SystemLogsManagement';
 import Appointments from './pages/customer/Appointments';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 
 // Helper redirect component for root "/"
@@ -72,6 +74,8 @@ function App() {
             {/* Public Route */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Root Redirect */}
             <Route path="/" element={<HomeRedirect />} />
