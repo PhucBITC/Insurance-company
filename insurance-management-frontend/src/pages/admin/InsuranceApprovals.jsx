@@ -7,7 +7,8 @@ import {
   User, 
   FileText,
   HelpCircle,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
@@ -62,6 +63,23 @@ const InsuranceApprovals = () => {
   const showToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const handleExportContracts = async () => {
+    try {
+      const res = await apiClient.get('/api/admin/exports/contracts', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'hop_dong_bao_hiem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showToast('Đang tải file báo cáo hợp đồng...', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Không thể xuất báo cáo hợp đồng.', 'error');
+    }
   };
 
   const handleApproveClick = (id) => {
@@ -366,22 +384,35 @@ const InsuranceApprovals = () => {
             }} />
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Bộ lọc trạng thái:</span>
-            <select 
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="form-input"
-              style={{ width: '160px' }}
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="PENDING">Chờ duyệt</option>
-              <option value="APPROVED">Đang hiệu lực</option>
-              <option value="REJECTED">Bị từ chối</option>
-            </select>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Bộ lọc trạng thái:</span>
+              <select 
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="form-input"
+                style={{ width: '160px' }}
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="PENDING">Chờ duyệt</option>
+                <option value="APPROVED">Đang hiệu lực</option>
+                <option value="REJECTED">Bị từ chối</option>
+              </select>
+            </div>
+
+            {user?.role === 'ROLE_ADMIN' && (
+              <button 
+                onClick={handleExportContracts}
+                className="btn btn-secondary"
+                style={{ height: '38px', gap: '6px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}
+              >
+                <Download size={14} />
+                <span>Xuất báo cáo</span>
+              </button>
+            )}
           </div>
         </div>
 

@@ -25,6 +25,8 @@ import MyIncidentReports from './pages/customer/MyIncidentReports';
 import IncidentReportsManagement from './pages/employee/IncidentReportsManagement';
 import ChatbotAssistant from './pages/customer/ChatbotAssistant';
 import SystemLogsManagement from './pages/admin/SystemLogsManagement';
+import Appointments from './pages/customer/Appointments';
+import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 
 
 // Helper redirect component for root "/"
@@ -87,6 +89,7 @@ function App() {
               <Route path="assignments" element={<AssignmentsManagement />} />
               <Route path="incidents" element={<IncidentReportsManagement />} />
               <Route path="logs" element={<SystemLogsManagement />} />
+              <Route path="appointments" element={<AppointmentsManagement />} />
             </Route>
 
             {/* Employee Protected Routes */}
@@ -99,6 +102,7 @@ function App() {
               <Route path="customers" element={<MyCustomers />} />
               <Route path="contracts" element={<InsuranceApprovals />} />
               <Route path="incidents" element={<IncidentReportsManagement />} />
+              <Route path="appointments" element={<AppointmentsManagement />} />
             </Route>
 
             {/* Customer Protected Routes */}
@@ -112,6 +116,7 @@ function App() {
               <Route path="my-insurances" element={<MyInsurances />} />
               <Route path="reports" element={<MyIncidentReports />} />
               <Route path="chatbot" element={<ChatbotAssistant />} />
+              <Route path="appointments" element={<Appointments />} />
             </Route>
 
             {/* Fallback to Root */}

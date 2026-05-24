@@ -36,6 +36,9 @@ const translations = {
     "path:/customer/my-insurances": "Hợp đồng bảo hiểm",
     "path:/customer/reports": "Báo cáo sự cố",
     "path:/customer/chatbot": "Trợ lý AI chatbot",
+    "path:/admin/appointments": "Lịch tư vấn",
+    "path:/employee/appointments": "Lịch tư vấn",
+    "path:/customer/appointments": "Lịch tư vấn",
 
     // Admin Dashboard
     newPackageBtn: "Gói bảo hiểm mới",
@@ -101,6 +104,9 @@ const translations = {
     "path:/customer/my-insurances": "Insurance Contracts",
     "path:/customer/reports": "Report Incident",
     "path:/customer/chatbot": "AI Chatbot Assistant",
+    "path:/admin/appointments": "Consultations",
+    "path:/employee/appointments": "Consultations",
+    "path:/customer/appointments": "Consultations",
 
     // Admin Dashboard
     newPackageBtn: "New Package",

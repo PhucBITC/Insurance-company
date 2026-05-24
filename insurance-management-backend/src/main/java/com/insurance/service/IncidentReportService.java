@@ -41,6 +41,9 @@ public class IncidentReportService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public IncidentReportResponseDto createReport(Long customerUserId, IncidentReportRequestDto request) {
         Customer customer = customerRepository.findByUserId(customerUserId)
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy hồ sơ khách hàng cho tài khoản hiện tại!"));
@@ -100,6 +103,28 @@ public class IncidentReportService {
         report.setStatus("NEW");
 
         IncidentReport saved = incidentReportRepository.save(report);
+
+        // Gửi thông báo sự cố mới
+        if (saved.getHandlerEmployee() != null) {
+            notificationService.sendNotification(
+                saved.getHandlerEmployee().getUser(),
+                "Khai báo sự cố mới",
+                "Khách hàng " + customer.getFullName() + " đã khai báo sự cố mới: \"" + saved.getTitle() + "\" (Mã báo cáo: " + saved.getReportCode() + ")",
+                "/employee/incidents"
+            );
+            notificationService.sendNotificationToAllAdmins(
+                "Khai báo sự cố mới (Đã phân công)",
+                "Khách hàng " + customer.getFullName() + " đã khai báo sự cố mới: \"" + saved.getTitle() + "\" (Mã báo cáo: " + saved.getReportCode() + ")",
+                "/admin/incidents"
+            );
+        } else {
+            notificationService.sendNotificationToAllAdmins(
+                "Khai báo sự cố mới (Chưa phân công)",
+                "Khách hàng " + customer.getFullName() + " đã khai báo sự cố mới: \"" + saved.getTitle() + "\" (Mã báo cáo: " + saved.getReportCode() + ")",
+                "/admin/incidents"
+            );
+        }
+
         return convertToDto(saved);
     }
 
@@ -151,6 +176,18 @@ public class IncidentReportService {
 
         report.setStatus(status);
         IncidentReport saved = incidentReportRepository.save(report);
+
+        // Gửi thông báo xử lý sự cố đến khách hàng
+        String title = "Cập nhật yêu cầu bồi thường sự cố";
+        String content = "Yêu cầu bồi thường sự cố \"" + saved.getTitle() + "\" (Mã báo cáo: " + saved.getReportCode() + ") đã được chuyển sang trạng thái: " + saved.getStatus() + 
+                ("REJECTED".equals(saved.getStatus()) ? ". Lý do: " + saved.getRejectReason() : "");
+        notificationService.sendNotification(
+            saved.getCustomer().getUser(),
+            title,
+            content,
+            "/customer/reports"
+        );
+
         return convertToDto(saved);
     }
 

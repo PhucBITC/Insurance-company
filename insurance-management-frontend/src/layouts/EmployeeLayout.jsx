@@ -4,7 +4,8 @@ import {
   LayoutDashboard, 
   Users, 
   AlertTriangle,
-  FileCheck
+  FileCheck,
+  Calendar
 } from 'lucide-react';
 
 const EmployeeLayout = () => {
@@ -13,6 +14,7 @@ const EmployeeLayout = () => {
     { path: '/employee/customers', name: 'Khách Hàng Của Tôi', icon: Users },
     { path: '/employee/contracts', name: 'Duyệt yêu cầu gói', icon: FileCheck },
     { path: '/employee/incidents', name: 'Sự Cố Bảo Hiểm', icon: AlertTriangle },
+    { path: '/employee/appointments', name: 'Lịch tư vấn', icon: Calendar },
   ];
 
   return <AppLayout navItems={navItems} />;

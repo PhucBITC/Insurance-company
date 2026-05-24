@@ -31,6 +31,9 @@ public class CustomerInsuranceService {
     @Autowired
     private InsurancePackageRepository insurancePackageRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private final Random random = new Random();
 
     public CustomerInsuranceResponseDto registerPackage(Long customerUserId, CustomerInsuranceRequestDto request) {
@@ -72,6 +75,11 @@ public class CustomerInsuranceService {
         customerInsurance.setStatus("PENDING");
 
         CustomerInsurance saved = customerInsuranceRepository.save(customerInsurance);
+        notificationService.sendNotificationToAllAdmins(
+            "Yêu cầu mua gói bảo hiểm mới",
+            "Khách hàng " + customer.getFullName() + " đã đăng ký mua gói bảo hiểm: \"" + insurancePackage.getName() + "\"",
+            "/admin/contracts"
+        );
         return convertToDto(saved);
     }
 
@@ -117,6 +125,12 @@ public class CustomerInsuranceService {
         customerInsurance.setRejectReason(null);
 
         CustomerInsurance saved = customerInsuranceRepository.save(customerInsurance);
+        notificationService.sendNotification(
+            saved.getCustomer().getUser(),
+            "Hợp đồng bảo hiểm đã được duyệt",
+            "Đăng ký mua gói bảo hiểm \"" + saved.getInsurancePackage().getName() + "\" của bạn đã được phê duyệt. Số hợp đồng: " + saved.getContractCode(),
+            "/customer/my-insurances"
+        );
         return convertToDto(saved);
     }
 
@@ -139,6 +153,12 @@ public class CustomerInsuranceService {
         customerInsurance.setContractCode(null);
 
         CustomerInsurance saved = customerInsuranceRepository.save(customerInsurance);
+        notificationService.sendNotification(
+            saved.getCustomer().getUser(),
+            "Đăng ký bảo hiểm bị từ chối",
+            "Đăng ký mua gói bảo hiểm \"" + saved.getInsurancePackage().getName() + "\" của bạn đã bị từ chối. Lý do: " + rejectReason,
+            "/customer/my-insurances"
+        );
         return convertToDto(saved);
     }
 

@@ -5,7 +5,8 @@ import {
   ShoppingBag, 
   FileCheck, 
   AlertTriangle, 
-  MessageSquareCode 
+  MessageSquareCode,
+  Calendar
 } from 'lucide-react';
 
 const CustomerLayout = () => {
@@ -15,6 +16,7 @@ const CustomerLayout = () => {
     { path: '/customer/my-insurances', name: 'Hợp Đồng Bảo Hiểm', icon: FileCheck },
     { path: '/customer/reports', name: 'Báo Cáo Sự Cố', icon: AlertTriangle },
     { path: '/customer/chatbot', name: 'Trợ Lý AI Chatbot', icon: MessageSquareCode },
+    { path: '/customer/appointments', name: 'Lịch tư vấn', icon: Calendar },
   ];
 
   return <AppLayout navItems={navItems} />;

@@ -17,7 +17,8 @@ import {
   X,
   UserPlus,
   Lock,
-  Unlock
+  Unlock,
+  Download
 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
@@ -80,6 +81,23 @@ const UsersManagement = () => {
   const showToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const handleExportCustomers = async () => {
+    try {
+      const res = await apiClient.get('/api/admin/exports/customers', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'danh_sach_khach_hang.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showToast('Đang tải file danh sách khách hàng...', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Không thể xuất danh sách khách hàng.', 'error');
+    }
   };
 
   // Load Data
@@ -733,12 +751,24 @@ const UsersManagement = () => {
               : []
           }
           actions={
-            activeTab !== 'users' && (
-              <button onClick={openAddModal} className="btn btn-primary" style={{ height: '38px' }}>
-                <PlusCircle size={16} />
-                {activeTab === 'employees' ? 'Thêm nhân viên' : 'Thêm khách hàng'}
-              </button>
-            )
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {activeTab === 'customers' && (
+                <button 
+                  onClick={handleExportCustomers}
+                  className="btn btn-secondary"
+                  style={{ height: '38px', gap: '6px', fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}
+                >
+                  <Download size={14} />
+                  <span>Xuất báo cáo</span>
+                </button>
+              )}
+              {activeTab !== 'users' && (
+                <button onClick={openAddModal} className="btn btn-primary" style={{ height: '38px' }}>
+                  <PlusCircle size={16} />
+                  {activeTab === 'employees' ? 'Thêm nhân viên' : 'Thêm khách hàng'}
+                </button>
+              )}
+            </div>
           }
         />
 

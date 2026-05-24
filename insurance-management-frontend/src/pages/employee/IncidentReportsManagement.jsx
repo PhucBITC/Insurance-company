@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, AlertCircle, FileText, Search, RefreshCw, CheckCircle, Trash2, Eye, Ban } from 'lucide-react';
+import { ShieldAlert, AlertCircle, FileText, Search, RefreshCw, CheckCircle, Trash2, Eye, Ban, Download } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
 import DataTable from '../../components/DataTable';
@@ -71,6 +71,23 @@ const IncidentReportsManagement = () => {
   const showToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
+  };
+
+  const handleExportIncidents = async () => {
+    try {
+      const res = await apiClient.get('/api/admin/exports/incidents', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'su_co_bao_hiem.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      showToast('Đang tải file báo cáo sự cố...', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Không thể xuất báo cáo sự cố.', 'error');
+    }
   };
 
   const handleUpdateStatus = async (reportId, status, rejectReasonText = null) => {
@@ -435,6 +452,17 @@ const IncidentReportsManagement = () => {
               <RefreshCw size={14} />
               <span>Tải lại</span>
             </button>
+            {isAdmin && (
+              <button 
+                type="button" 
+                onClick={handleExportIncidents} 
+                className="btn btn-secondary" 
+                style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <Download size={14} />
+                <span>Xuất báo cáo</span>
+              </button>
+            )}
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Kết quả: <strong>{filteredReports.length}</strong> báo cáo
             </div>

@@ -29,6 +29,9 @@ public class CustomerAssignmentService {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public CustomerAssignmentResponseDto assignCustomer(CustomerAssignmentRequestDto request) {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy nhân viên với ID: " + request.getEmployeeId()));
@@ -45,6 +48,23 @@ public class CustomerAssignmentService {
         assignment.setCustomer(customer);
 
         CustomerAssignment saved = customerAssignmentRepository.save(assignment);
+
+        // Gửi thông báo đến nhân viên
+        notificationService.sendNotification(
+            employee.getUser(),
+            "Phân công khách hàng phụ trách",
+            "Bạn được phân công hỗ trợ riêng cho khách hàng: " + customer.getFullName() + " (" + customer.getCustomerCode() + ")",
+            "/employee/customers"
+        );
+
+        // Gửi thông báo đến khách hàng
+        notificationService.sendNotification(
+            customer.getUser(),
+            "Tư vấn viên hỗ trợ riêng",
+            "Nhân viên " + employee.getFullName() + " đã được chỉ định làm tư vấn viên phụ trách hỗ trợ riêng cho bạn.",
+            "/customer/dashboard"
+        );
+
         return convertToDto(saved);
     }
 
