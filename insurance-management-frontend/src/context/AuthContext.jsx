@@ -36,7 +36,6 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, user: userData };
     } catch (error) {
-      console.error('Login error:', error);
       let errorMsg = 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu!';
       if (error.response && error.response.data && error.response.data.message) {
         errorMsg = error.response.data.message;

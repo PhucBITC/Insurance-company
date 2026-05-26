@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/apiClient';
-import { Mail, Lock, AlertCircle, CheckCircle, HeartHandshake } from 'lucide-react';
+import { Mail, Lock, AlertCircle, CheckCircle, HeartHandshake, Eye, EyeOff } from 'lucide-react';
+import Toast from '../components/Toast';
 import './AuthPage.css';
 
 const LoginPage = () => {
@@ -11,6 +12,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoginSubmitting, setIsLoginSubmitting] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register State
   const [registerEmail, setRegisterEmail] = useState('');
@@ -19,10 +21,19 @@ const LoginPage = () => {
   const [registerError, setRegisterError] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState('');
   const [isRegisterSubmitting, setIsRegisterSubmitting] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [toasts, setToasts] = useState([]);
+  const successToastShown = useRef(false);
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+  };
 
   const isSignUp = location.pathname === '/register';
 
@@ -32,6 +43,16 @@ const LoginPage = () => {
     setRegisterError('');
     setRegisterSuccess('');
   }, [location.pathname]);
+
+  // Show verification success toast if redirected from VerifyEmail
+  useEffect(() => {
+    if (location.state?.verificationSuccess && !successToastShown.current) {
+      showToast('Xác thực tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.', 'success');
+      successToastShown.current = true;
+      // Clear state to avoid showing on reload
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -87,19 +108,28 @@ const LoginPage = () => {
         password: registerPassword
       });
 
-      setRegisterSuccess(response.data.message || 'Đăng ký tài khoản thành công!');
-      
-      // Clear form inputs
-      setRegisterEmail('');
-      setRegisterPassword('');
-      setConfirmPassword('');
+      const { requiresVerification, email: verifiedEmail } = response.data;
 
-      // Slide to Sign In after 2 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+      if (requiresVerification) {
+        setRegisterSuccess(response.data.message || 'Đăng ký tài khoản thành công! Vui lòng xác thực tài khoản...');
+        setRegisterEmail('');
+        setRegisterPassword('');
+        setConfirmPassword('');
+        
+        setTimeout(() => {
+          navigate(`/verify-email?email=${encodeURIComponent(verifiedEmail)}`);
+        }, 300);
+      } else {
+        setRegisterSuccess(response.data.message || 'Đăng ký tài khoản thành công!');
+        setRegisterEmail('');
+        setRegisterPassword('');
+        setConfirmPassword('');
+        
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      }
     } catch (err) {
-      console.error('Registration failed:', err);
       let errorMsg = 'Đăng ký thất bại. Vui lòng kết nối lại máy chủ hoặc thử lại sau!';
       if (err.response && err.response.data && err.response.data.message) {
         errorMsg = err.response.data.message;
@@ -174,26 +204,70 @@ const LoginPage = () => {
 
             <div className="input-field-container">
               <input
-                type="password"
+                type={showRegisterPassword ? "text" : "password"}
                 placeholder="Mật khẩu bảo mật"
                 value={registerPassword}
                 onChange={(e) => setRegisterPassword(e.target.value)}
                 disabled={isRegisterSubmitting || !!registerSuccess}
+                style={{ paddingRight: '40px' }}
                 required
               />
               <Lock size={16} className="input-field-icon" />
+              <button
+                type="button"
+                onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0,
+                  boxShadow: 'none'
+                }}
+                disabled={isRegisterSubmitting || !!registerSuccess}
+              >
+                {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
             <div className="input-field-container">
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 placeholder="Xác nhận mật khẩu"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isRegisterSubmitting || !!registerSuccess}
+                style={{ paddingRight: '40px' }}
                 required
               />
               <Lock size={16} className="input-field-icon" />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0,
+                  boxShadow: 'none'
+                }}
+                disabled={isRegisterSubmitting || !!registerSuccess}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
             <button type="submit" disabled={isRegisterSubmitting || !!registerSuccess} style={{ marginTop: '16px' }}>
@@ -234,14 +308,36 @@ const LoginPage = () => {
 
             <div className="input-field-container">
               <input
-                type="password"
+                type={showLoginPassword ? "text" : "password"}
                 placeholder="Mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoginSubmitting}
+                style={{ paddingRight: '40px' }}
                 required
               />
               <Lock size={16} className="input-field-icon" />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword(!showLoginPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0,
+                  boxShadow: 'none'
+                }}
+                disabled={isLoginSubmitting}
+              >
+                {showLoginPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
 
             <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>Quên mật khẩu?</a>
@@ -273,6 +369,27 @@ const LoginPage = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Toast Overlay Container */}
+      <div style={{
+        position: 'fixed',
+        top: '24px',
+        right: '24px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        pointerEvents: 'none'
+      }}>
+        {toasts.map(toast => (
+          <Toast 
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+          />
+        ))}
       </div>
     </div>
   );

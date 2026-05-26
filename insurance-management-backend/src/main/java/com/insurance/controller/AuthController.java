@@ -12,7 +12,9 @@ import com.insurance.entity.Customer;
 import com.insurance.repository.CustomerRepository;
 import com.insurance.repository.UserRepository;
 import com.insurance.repository.PasswordResetTokenRepository;
+import com.insurance.repository.EmailOtpTokenRepository;
 import com.insurance.service.EmailService;
+import com.insurance.entity.EmailOtpToken;
 import com.insurance.security.JwtTokenProvider;
 import com.insurance.security.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -75,13 +77,13 @@ public class AuthController {
                      role));
         } catch (org.springframework.security.authentication.DisabledException e) {
             systemLogService.log("Đăng nhập thất bại: Tài khoản bị ngưng hoạt động", loginRequest.getEmail(), "UNKNOWN", "WARNING");
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Tài khoản của bạn đã bị ngưng hoạt động!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Tài khoản của bạn đã bị ngưng hoạt động!"));
         } catch (org.springframework.security.authentication.LockedException e) {
             systemLogService.log("Đăng nhập thất bại: Tài khoản bị khóa", loginRequest.getEmail(), "UNKNOWN", "WARNING");
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Tài khoản của bạn đã bị khóa!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Tài khoản của bạn đã bị khóa!"));
         } catch (org.springframework.security.core.AuthenticationException e) {
             systemLogService.log("Đăng nhập thất bại: Sai email hoặc mật khẩu", loginRequest.getEmail(), "UNKNOWN", "DANGER");
-            return ResponseEntity.status(401).body(new MessageResponse("Lỗi: Email hoặc mật khẩu không chính xác!"));
+            return ResponseEntity.status(401).body(new MessageResponse("Email hoặc mật khẩu không chính xác!"));
         }
     }
 
@@ -90,17 +92,83 @@ public class AuthController {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             return ResponseEntity
                     .badRequest()
-                    .body(new MessageResponse("Lỗi: Email này đã được sử dụng!"));
+                    .body(new MessageResponse("Email này đã được sử dụng!"));
         }
 
-        // Create new user's account
+        // Clean up any existing OTP token for this email (in case they request registration again)
+        emailOtpTokenRepository.findByEmail(signUpRequest.getEmail())
+                .ifPresent(t -> emailOtpTokenRepository.delete(t));
+
+        // Generate 6-digit OTP
+        String otp = String.format("%06d", new java.util.Random().nextInt(1000000));
+        
+        EmailOtpToken otpToken = new EmailOtpToken();
+        otpToken.setEmail(signUpRequest.getEmail());
+        otpToken.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        otpToken.setOtp(otp);
+        otpToken.setExpiryDate(java.time.LocalDateTime.now().plusMinutes(5)); // OTP valid for 5 mins
+        emailOtpTokenRepository.save(otpToken);
+
+        // Send OTP email
+        emailService.sendVerificationOtpEmail(signUpRequest.getEmail(), otp);
+
+        systemLogService.log("Yêu cầu đăng ký tài khoản khách hàng mới: " + signUpRequest.getEmail(), signUpRequest.getEmail(), "ROLE_CUSTOMER", "SUCCESS");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("message", "Đăng ký tài khoản thành công! Vui lòng kiểm tra email để lấy mã xác thực OTP kích hoạt tài khoản.");
+        response.put("requiresVerification", true);
+        response.put("email", signUpRequest.getEmail());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
+    private EmailOtpTokenRepository emailOtpTokenRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @PostMapping("/verify-registration")
+    public ResponseEntity<?> verifyRegistration(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        String otp = request.get("otp");
+
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Email không được để trống!"));
+        }
+
+        if (otp == null || otp.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã OTP không được để trống!"));
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Tài khoản của bạn đã được xác thực hoạt động trước đó."));
+        }
+
+        EmailOtpToken otpToken = emailOtpTokenRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mã OTP cho tài khoản này!"));
+
+        if (otpToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
+            emailOtpTokenRepository.delete(otpToken);
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã OTP đã hết hạn! Vui lòng bấm gửi lại mã OTP mới."));
+        }
+
+        if (!otpToken.getOtp().equals(otp.trim())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã OTP xác thực không chính xác!"));
+        }
+
+        // Create new user's account officially
         User user = new User();
-        user.setEmail(signUpRequest.getEmail());
-        user.setPassword(passwordEncoder.encode(signUpRequest.getPassword()));
+        user.setEmail(otpToken.getEmail());
+        user.setPassword(otpToken.getPassword());
+        user.setStatus("ACTIVE");
 
         // Default role is ROLE_CUSTOMER
         Role userRole = roleRepository.findByName(ERole.ROLE_CUSTOMER)
-                .orElseThrow(() -> new RuntimeException("Lỗi: Vai trò ROLE_CUSTOMER không tồn tại trên hệ thống."));
+                .orElseThrow(() -> new RuntimeException("Vai trò ROLE_CUSTOMER không tồn tại trên hệ thống."));
         user.setRole(userRole);
 
         userRepository.save(user);
@@ -112,22 +180,49 @@ public class AuthController {
         customer.setUser(user);
         customerRepository.save(customer);
 
-        systemLogService.log("Đăng ký tài khoản khách hàng mới thành công: " + signUpRequest.getEmail(), signUpRequest.getEmail(), "ROLE_CUSTOMER", "SUCCESS");
+        // Clean up OTP token
+        emailOtpTokenRepository.delete(otpToken);
 
-        return ResponseEntity.ok(new MessageResponse("Đăng ký tài khoản thành công!"));
+        systemLogService.log("Xác thực đăng ký tài khoản thành công", user.getEmail(), "ROLE_CUSTOMER", "SUCCESS");
+
+        return ResponseEntity.ok(new MessageResponse("Xác thực tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ."));
     }
 
-    @Autowired
-    private PasswordResetTokenRepository passwordResetTokenRepository;
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
 
-    @Autowired
-    private EmailService emailService;
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Email không được để trống!"));
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.ok(new MessageResponse("Tài khoản của bạn đã được xác thực hoạt động trước đó."));
+        }
+
+        // Find existing OTP token to update it or delete and create a new one
+        EmailOtpToken otpToken = emailOtpTokenRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy phiên đăng ký cho email này!"));
+
+        // Generate new OTP
+        String otp = String.format("%06d", new java.util.Random().nextInt(1000000));
+        otpToken.setOtp(otp);
+        otpToken.setExpiryDate(java.time.LocalDateTime.now().plusMinutes(5));
+        emailOtpTokenRepository.save(otpToken);
+
+        // Send OTP email
+        emailService.sendVerificationOtpEmail(email, otp);
+
+        systemLogService.log("Yêu cầu gửi lại mã OTP đăng ký mới", email, "ROLE_CUSTOMER", "SUCCESS");
+
+        return ResponseEntity.ok(new MessageResponse("Đã gửi lại mã OTP xác thực mới thành công!"));
+    }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request) {
         String email = request.get("email");
         if (email == null || email.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Email không được trống!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Email không được trống!"));
         }
 
         User user = userRepository.findByEmail(email).orElse(null);
@@ -163,23 +258,23 @@ public class AuthController {
         String newPassword = request.get("newPassword");
 
         if (token == null || token.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Token đặt lại mật khẩu không hợp lệ!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Token đặt lại mật khẩu không hợp lệ!"));
         }
 
         if (newPassword == null || newPassword.trim().length() < 6) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Mật khẩu mới phải có tối thiểu 6 ký tự!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Mật khẩu mới phải có tối thiểu 6 ký tự!"));
         }
 
         com.insurance.entity.PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElse(null);
 
         if (resetToken == null) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!"));
         }
 
         if (resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
             passwordResetTokenRepository.delete(resetToken);
-            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Liên kết đặt lại mật khẩu đã hết hạn!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Liên kết đặt lại mật khẩu đã hết hạn!"));
         }
 
         User user = resetToken.getUser();

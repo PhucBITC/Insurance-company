@@ -46,9 +46,22 @@ const ChatbotAssistant = () => {
     "Giới thiệu các gói bảo hiểm đang mở bán"
   ];
 
-  // Save messages to local storage
+  // Save messages to local storage (limit to last 50 messages to avoid running out of storage space)
   useEffect(() => {
-    localStorage.setItem('chatbot_messages', JSON.stringify(messages));
+    const welcomeMsg = messages.find(m => m.id === 'welcome');
+    let messagesToSave = messages;
+    
+    if (messages.length > 50) {
+      const recentMessages = messages.slice(-50);
+      // Keep welcome message at the beginning if it exists
+      if (welcomeMsg && !recentMessages.some(m => m.id === 'welcome')) {
+        messagesToSave = [welcomeMsg, ...recentMessages];
+      } else {
+        messagesToSave = recentMessages;
+      }
+    }
+    
+    localStorage.setItem('chatbot_messages', JSON.stringify(messagesToSave));
     scrollToBottom();
   }, [messages]);
 

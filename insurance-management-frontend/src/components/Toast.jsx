@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CheckCircle, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
   const [progress, setProgress] = useState(100);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const startTime = Date.now();
@@ -12,12 +17,14 @@ const Toast = ({ message, type = 'success', onClose, duration = 4000 }) => {
       setProgress(remaining);
       if (elapsed >= duration) {
         clearInterval(interval);
-        onClose();
+        if (onCloseRef.current) {
+          onCloseRef.current();
+        }
       }
     }, 10);
 
     return () => clearInterval(interval);
-  }, [duration, onClose]);
+  }, [duration]);
 
   const getToastConfig = () => {
     switch (type) {

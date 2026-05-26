@@ -34,7 +34,6 @@ public class InsuranceManagementApplication {
                 }
             }
         }
-        
         SpringApplication.run(InsuranceManagementApplication.class, args);
     }
 }

@@ -29,6 +29,7 @@ import Appointments from './pages/customer/Appointments';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 
 
 // Helper redirect component for root "/"
@@ -76,6 +77,7 @@ function App() {
             <Route path="/register" element={<LoginPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Root Redirect */}
             <Route path="/" element={<HomeRedirect />} />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiClient from '../api/apiClient';
-import { Lock, ArrowLeft, AlertCircle, CheckCircle, HeartHandshake } from 'lucide-react';
+import { Lock, ArrowLeft, AlertCircle, CheckCircle, HeartHandshake, Eye, EyeOff } from 'lucide-react';
 import './AuthPage.css';
 
 const ResetPassword = () => {
@@ -10,6 +10,8 @@ const ResetPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -107,24 +109,68 @@ const ResetPassword = () => {
 
           <div className="input-field-container">
             <input
-              type="password"
+              type={showNewPassword ? "text" : "password"}
               placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={isSubmitting || !token}
+              style={{ paddingRight: '40px' }}
             />
             <Lock className="input-field-icon" size={16} />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                boxShadow: 'none'
+              }}
+              disabled={isSubmitting || !token}
+            >
+              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
 
           <div className="input-field-container" style={{ marginTop: '12px' }}>
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="Xác nhận mật khẩu mới"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting || !token}
+              style={{ paddingRight: '40px' }}
             />
             <Lock className="input-field-icon" size={16} />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                boxShadow: 'none'
+              }}
+              disabled={isSubmitting || !token}
+            >
+              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
           </div>
 
           <button type="submit" disabled={isSubmitting || !token} style={{ width: '100%', marginTop: '20px', borderRadius: 'var(--radius-sm)' }}>
