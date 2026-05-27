@@ -227,15 +227,15 @@ public class AuthController {
 
         User user = userRepository.findByEmail(email).orElse(null);
         if (user == null) {
-            return ResponseEntity.ok(new MessageResponse("Nếu email tồn tại trên hệ thống, liên kết đặt lại mật khẩu đã được gửi!"));
+            return ResponseEntity.ok(new MessageResponse("Nếu email tồn tại trên hệ thống, mã xác thực đặt lại mật khẩu đã được gửi!"));
         }
 
         // Delete existing token if any
         passwordResetTokenRepository.findByUserId(user.getId())
                 .ifPresent(t -> passwordResetTokenRepository.delete(t));
 
-        // Create new token
-        String token = java.util.UUID.randomUUID().toString();
+        // Create new token (6-digit OTP code)
+        String token = String.format("%06d", new java.util.Random().nextInt(1000000));
         com.insurance.entity.PasswordResetToken resetToken = new com.insurance.entity.PasswordResetToken();
         resetToken.setUser(user);
         resetToken.setToken(token);
@@ -244,12 +244,12 @@ public class AuthController {
         passwordResetTokenRepository.save(resetToken);
 
         // Send email
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
-        emailService.sendPasswordResetEmail(user.getEmail(), resetLink);
+        String resetLink = "http://localhost:5173/forgot-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), token, resetLink);
 
         systemLogService.log("Yêu cầu đặt lại mật khẩu thành công cho email: " + email, email, user.getRole().getName().toString(), "SUCCESS");
 
-        return ResponseEntity.ok(new MessageResponse("Đã gửi link đặt lại mật khẩu thành công!"));
+        return ResponseEntity.ok(new MessageResponse("Mã OTP đặt lại mật khẩu đã được gửi về email thành công!"));
     }
 
     @PostMapping("/reset-password")
@@ -258,7 +258,7 @@ public class AuthController {
         String newPassword = request.get("newPassword");
 
         if (token == null || token.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Token đặt lại mật khẩu không hợp lệ!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã xác thực hoặc token đặt lại mật khẩu không hợp lệ!"));
         }
 
         if (newPassword == null || newPassword.trim().length() < 6) {
@@ -269,22 +269,28 @@ public class AuthController {
                 .orElse(null);
 
         if (resetToken == null) {
-            return ResponseEntity.badRequest().body(new MessageResponse("Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã xác thực OTP không hợp lệ hoặc đã hết hạn!"));
         }
 
         if (resetToken.getExpiryDate().isBefore(java.time.LocalDateTime.now())) {
             passwordResetTokenRepository.delete(resetToken);
-            return ResponseEntity.badRequest().body(new MessageResponse("Liên kết đặt lại mật khẩu đã hết hạn!"));
+            return ResponseEntity.badRequest().body(new MessageResponse("Mã xác thực OTP đặt lại mật khẩu đã hết hạn!"));
         }
 
         User user = resetToken.getUser();
+        
+        // Kiểm tra xem mật khẩu mới có trùng với mật khẩu hiện tại hay không
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Bạn nên đổi lại mật khẩu khác so với mật khẩu bạn đã từng nhập ở đây"));
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         // Delete token
         passwordResetTokenRepository.delete(resetToken);
 
-        systemLogService.log("Đặt lại mật khẩu thành công bằng token", user.getEmail(), user.getRole().getName().toString(), "SUCCESS");
+        systemLogService.log("Đặt lại mật khẩu thành công bằng token/OTP", user.getEmail(), user.getRole().getName().toString(), "SUCCESS");
 
         return ResponseEntity.ok(new MessageResponse("Đặt lại mật khẩu thành công!"));
     }
