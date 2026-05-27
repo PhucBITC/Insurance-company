@@ -45,6 +45,9 @@ public class ChatbotController {
     @Autowired
     private InsurancePackageRepository insurancePackageRepository;
 
+    @Autowired
+    private WikiDocumentRepository wikiDocumentRepository;
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     @PostMapping("/customer/chatbot/chat")
@@ -67,7 +70,7 @@ public class ChatbotController {
             }
 
             // 2. Build context-aware system prompt (RAG)
-            String systemPrompt = buildSystemPrompt(customer);
+            String systemPrompt = buildSystemPrompt(customer, userMessage);
 
             // 3. Make REST call to Groq Cloud (OpenAI compatible)
             try {
@@ -129,7 +132,7 @@ public class ChatbotController {
 
     // --- PROMPT CONTEXT BUILDER (RAG) ---
 
-    private String buildSystemPrompt(Customer customer) {
+    private String buildSystemPrompt(Customer customer, String userMessage) {
         StringBuilder sb = new StringBuilder();
         sb.append("Bạn là trợ lý ảo AI Chatbot chăm sóc khách hàng thông minh của hệ thống bảo hiểm Bảo An.\n");
         sb.append("Hãy chào đón khách hàng, giải đáp thắc mắc và tư vấn cho họ một cách thân thiện, lễ phép và chuyên nghiệp bằng tiếng Việt.\n");
@@ -177,8 +180,16 @@ public class ChatbotController {
         }
         sb.append("\n");
 
+        // Tích hợp Tài liệu Wiki trích xuất (RAG)
+        String wikiContext = getWikiContext(userMessage);
+        if (!wikiContext.isEmpty()) {
+            sb.append("--- TÀI LIỆU HƯỚNG DẪN NỘI BỘ (WIKI) TRÙNG KHỚP ---\n");
+            sb.append("Dưới đây là nội dung trích xuất từ tài liệu hướng dẫn nghiệp vụ/sản phẩm liên quan đến câu hỏi của khách hàng:\n");
+            sb.append(wikiContext).append("\n");
+        }
+
         sb.append("--- QUY TRÌNH BÁO CÁO SỰ CỐ / YÊU CẦU BỒI THƯỜNG ---\n");
-        sb.append("Nếu khách hàng hỏi cách làm thủ tục bồi thường sự cố bảo hiểm (tai nạn, viện phí, v.v.), hãy hướng dẫn họ thực hiện các bước sau trên website:\n");
+        sb.append("If khách hàng hỏi cách làm thủ tục bồi thường sự cố bảo hiểm (tai nạn, viện phí, v.v.), hãy hướng dẫn họ thực hiện các bước sau trên website:\n");
         sb.append("1. Truy cập vào mục 'Báo cáo sự cố' ở thanh menu bên trái (sidebar).\n");
         sb.append("2. Bấm nút 'Khai báo sự cố mới' ở góc trên bên phải.\n");
         sb.append("3. Chọn đúng hợp đồng bảo hiểm đang có hiệu lực liên kết với sự cố.\n");
@@ -190,10 +201,51 @@ public class ChatbotController {
         return sb.toString();
     }
 
+    private String getWikiContext(String userMessage) {
+        if (userMessage == null || userMessage.trim().isEmpty()) {
+            return "";
+        }
+        List<WikiDocument> docs = wikiDocumentRepository.findAll();
+        if (docs.isEmpty()) {
+            return "";
+        }
+        
+        StringBuilder context = new StringBuilder();
+        String lowerMessage = userMessage.toLowerCase();
+        String[] words = lowerMessage.split("[\\s\\p{Punct}]+");
+        
+        for (WikiDocument doc : docs) {
+            String docContent = doc.getContent().toLowerCase();
+            boolean matches = false;
+            int matchCount = 0;
+            for (String word : words) {
+                if (word.length() > 2 && docContent.contains(word)) {
+                    matches = true;
+                    matchCount++;
+                }
+            }
+            if (matches || docs.size() <= 2) {
+                String content = doc.getContent();
+                if (content.length() > 2000) {
+                    content = content.substring(0, 2000) + "...";
+                }
+                context.append("- Tài liệu ").append(doc.getFileName()).append(":\n")
+                       .append(content).append("\n\n");
+            }
+        }
+        return context.toString();
+    }
+
     // --- SMART KEYWORD-BASED FALLBACK RESPONSE ---
 
     private String getFallbackResponse(String userText, Customer customer) {
         String text = userText.toLowerCase();
+        
+        // Check matching Wiki Documents for local fallback reference
+        String wikiContext = getWikiContext(userText);
+        if (!wikiContext.isEmpty()) {
+            return "Chào " + customer.getFullName() + "! Dựa trên tài liệu chính sách của bảo hiểm Bảo An, tôi xin cung cấp thông tin liên quan đến câu hỏi của bạn như sau:\n\n" + wikiContext;
+        }
         
         if (text.contains("sự cố") || text.contains("báo cáo") || text.contains("bồi thường") || text.contains("tai nạn") || text.contains("khai báo")) {
             return "Chào " + customer.getFullName() + "! Để khai báo sự cố và yêu cầu bồi thường bảo hiểm, bạn hãy làm theo các bước sau:\n\n" +

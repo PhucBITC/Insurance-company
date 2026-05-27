@@ -6,7 +6,8 @@ import {
   FileCheck, 
   AlertTriangle, 
   MessageSquareCode,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 
 const CustomerLayout = () => {
@@ -17,6 +18,7 @@ const CustomerLayout = () => {
     { path: '/customer/reports', name: 'Báo Cáo Sự Cố', icon: AlertTriangle },
     { path: '/customer/chatbot', name: 'Trợ Lý AI Chatbot', icon: MessageSquareCode },
     { path: '/customer/appointments', name: 'Lịch tư vấn', icon: Calendar },
+    { path: '/customer/chat', name: 'Trò chuyện hỗ trợ', icon: MessageSquare },
   ];
 
   return <AppLayout navItems={navItems} />;

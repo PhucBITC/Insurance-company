@@ -8,7 +8,8 @@ import {
   Activity,
   FileCheck,
   AlertTriangle,
-  Calendar
+  Calendar,
+  BookOpen
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -20,6 +21,7 @@ const AdminLayout = () => {
     { path: '/admin/assignments', name: 'Phân công nhân sự', icon: Users },
     { path: '/admin/incidents', name: 'Sự cố bảo hiểm', icon: AlertTriangle },
     { path: '/admin/appointments', name: 'Lịch tư vấn', icon: Calendar },
+    { path: '/admin/wiki', name: 'Quản lý tài liệu', icon: BookOpen },
     { path: '/admin/logs', name: 'Lịch sử hoạt động', icon: Activity },
   ];
 

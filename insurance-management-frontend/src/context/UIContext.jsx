@@ -39,6 +39,9 @@ const translations = {
     "path:/admin/appointments": "Lịch tư vấn",
     "path:/employee/appointments": "Lịch tư vấn",
     "path:/customer/appointments": "Lịch tư vấn",
+    "path:/admin/wiki": "Quản lý tài liệu Wiki",
+    "path:/employee/chat": "Hỗ trợ khách hàng",
+    "path:/customer/chat": "Trò chuyện hỗ trợ",
 
     // Admin Dashboard
     newPackageBtn: "Gói bảo hiểm mới",
@@ -107,6 +110,9 @@ const translations = {
     "path:/admin/appointments": "Consultations",
     "path:/employee/appointments": "Consultations",
     "path:/customer/appointments": "Consultations",
+    "path:/admin/wiki": "Wiki Documents",
+    "path:/employee/chat": "Live Support",
+    "path:/customer/chat": "Live Support",
 
     // Admin Dashboard
     newPackageBtn: "New Package",

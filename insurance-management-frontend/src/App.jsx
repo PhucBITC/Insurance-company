@@ -30,6 +30,9 @@ import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import WikiManagement from './pages/admin/WikiManagement';
+import LiveSupportChat from './pages/customer/LiveSupportChat';
+import EmployeeSupportChat from './pages/employee/EmployeeSupportChat';
 
 
 // Helper redirect component for root "/"
@@ -95,6 +98,7 @@ function App() {
               <Route path="assignments" element={<AssignmentsManagement />} />
               <Route path="incidents" element={<IncidentReportsManagement />} />
               <Route path="logs" element={<SystemLogsManagement />} />
+              <Route path="wiki" element={<WikiManagement />} />
               <Route path="appointments" element={<AppointmentsManagement />} />
             </Route>
 
@@ -109,6 +113,7 @@ function App() {
               <Route path="contracts" element={<InsuranceApprovals />} />
               <Route path="incidents" element={<IncidentReportsManagement />} />
               <Route path="appointments" element={<AppointmentsManagement />} />
+              <Route path="chat" element={<EmployeeSupportChat />} />
             </Route>
 
             {/* Customer Protected Routes */}
@@ -123,6 +128,7 @@ function App() {
               <Route path="reports" element={<MyIncidentReports />} />
               <Route path="chatbot" element={<ChatbotAssistant />} />
               <Route path="appointments" element={<Appointments />} />
+              <Route path="chat" element={<LiveSupportChat />} />
             </Route>
 
             {/* Fallback to Root */}
