@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, MessageSquare, AlertCircle, RefreshCw, Search } from 'lucide-react';
+import { Send, User, MessageSquare, AlertCircle, RefreshCw, Search, Sparkles } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
 import { useUI } from '../../context/UIContext';
@@ -21,6 +21,7 @@ const EmployeeSupportChat = () => {
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingContent, setEditingContent] = useState('');
+  const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -91,6 +92,25 @@ const EmployeeSupportChat = () => {
       console.error(err);
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  // AI reply suggestion trigger
+  const handleAiSuggestReply = async () => {
+    if (!selectedContact) return;
+    setAiSuggestLoading(true);
+    try {
+      const res = await apiClient.post('/api/employee/ai/suggest-reply', {
+        contactId: selectedContact.userId
+      });
+      if (res.data && res.data.suggestion) {
+        setInput(res.data.suggestion);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(language === 'vi' ? 'Không thể lấy gợi ý phản hồi AI lúc này.' : 'Failed to fetch AI reply suggestion.');
+    } finally {
+      setAiSuggestLoading(false);
     }
   };
 
@@ -707,6 +727,29 @@ const EmployeeSupportChat = () => {
                     style={{ flexGrow: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid var(--glass-border)', outline: 'none', backgroundColor: 'var(--card)', color: 'var(--text-main)' }}
                     disabled={!connected}
                   />
+                  <button 
+                    type="button"
+                    onClick={handleAiSuggestReply}
+                    className="btn btn-secondary"
+                    style={{ 
+                      borderRadius: '50%', 
+                      width: '40px', 
+                      height: '40px', 
+                      padding: 0, 
+                      minWidth: 'auto', 
+                      justifyContent: 'center',
+                      borderColor: 'rgba(99, 102, 241, 0.3)',
+                      color: 'var(--primary)'
+                    }}
+                    title={language === 'vi' ? 'AI Gợi ý phản hồi' : 'AI Suggest Reply'}
+                    disabled={aiSuggestLoading || !connected}
+                  >
+                    {aiSuggestLoading ? (
+                      <RefreshCw className="animate-spin" size={16} />
+                    ) : (
+                      <Sparkles size={16} style={{ color: '#eab308' }} />
+                    )}
+                  </button>
                   <button 
                     type="submit" 
                     className="btn btn-primary" 

@@ -9,7 +9,8 @@ import {
   FileCheck,
   AlertTriangle,
   Calendar,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 
 const AdminLayout = () => {
@@ -23,6 +24,7 @@ const AdminLayout = () => {
     { path: '/admin/appointments', name: 'Lịch tư vấn', icon: Calendar },
     { path: '/admin/wiki', name: 'Quản lý tài liệu', icon: BookOpen },
     { path: '/admin/logs', name: 'Lịch sử hoạt động', icon: Activity },
+    { path: '/admin/ai-analyst', name: 'Trợ lý AI hệ thống', icon: Sparkles },
   ];
 
   return <AppLayout navItems={navItems} />;

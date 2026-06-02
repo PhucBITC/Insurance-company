@@ -25,6 +25,7 @@ import MyIncidentReports from './pages/customer/MyIncidentReports';
 import IncidentReportsManagement from './pages/employee/IncidentReportsManagement';
 import ChatbotAssistant from './pages/customer/ChatbotAssistant';
 import SystemLogsManagement from './pages/admin/SystemLogsManagement';
+import SystemAiAnalyst from './pages/admin/SystemAiAnalyst';
 import Appointments from './pages/customer/Appointments';
 import AppointmentsManagement from './pages/admin/AppointmentsManagement';
 import ForgotPassword from './pages/ForgotPassword';
@@ -100,6 +101,7 @@ function App() {
               <Route path="logs" element={<SystemLogsManagement />} />
               <Route path="wiki" element={<WikiManagement />} />
               <Route path="appointments" element={<AppointmentsManagement />} />
+              <Route path="ai-analyst" element={<SystemAiAnalyst />} />
             </Route>
 
             {/* Employee Protected Routes */}

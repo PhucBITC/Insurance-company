@@ -42,6 +42,7 @@ const translations = {
     "path:/admin/wiki": "Quản lý tài liệu Wiki",
     "path:/employee/chat": "Hỗ trợ khách hàng",
     "path:/customer/chat": "Trò chuyện hỗ trợ",
+    "path:/admin/ai-analyst": "Trợ lý AI hệ thống",
 
     // Admin Dashboard
     newPackageBtn: "Gói bảo hiểm mới",
@@ -113,6 +114,7 @@ const translations = {
     "path:/admin/wiki": "Wiki Documents",
     "path:/employee/chat": "Live Support",
     "path:/customer/chat": "Live Support",
+    "path:/admin/ai-analyst": "System AI Analyst",
 
     // Admin Dashboard
     newPackageBtn: "New Package",

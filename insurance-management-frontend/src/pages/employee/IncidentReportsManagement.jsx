@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, AlertCircle, FileText, Search, RefreshCw, CheckCircle, Trash2, Eye, Ban, Download } from 'lucide-react';
+import { ShieldAlert, AlertCircle, FileText, Search, RefreshCw, CheckCircle, Trash2, Eye, Ban, Download, Sparkles } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
 import DataTable from '../../components/DataTable';
@@ -48,6 +48,11 @@ const IncidentReportsManagement = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // AI Analysis States
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -191,6 +196,23 @@ const IncidentReportsManagement = () => {
     }
   };
 
+  const handleAiAnalysis = async (report) => {
+    setSelectedReport(report);
+    setAiLoading(true);
+    setIsAiModalOpen(true);
+    setAiAnalysis(null);
+    try {
+      const res = await apiClient.post(`/api/employee/ai/analyze-incident/${report.id}`);
+      setAiAnalysis(res.data);
+    } catch (err) {
+      console.error(err);
+      showToast('Không thể tải kết quả phân tích AI.', 'error');
+      setIsAiModalOpen(false);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const formatCurrency = (val) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
   };
@@ -312,6 +334,27 @@ const IncidentReportsManagement = () => {
               <Eye size={12} />
               <span>Xem</span>
             </button>
+
+            {row.status !== 'RESOLVED' && row.status !== 'REJECTED' && (
+              <button 
+                type="button"
+                onClick={() => handleAiAnalysis(row)}
+                className="btn btn-secondary"
+                style={{ 
+                  padding: '4px 8px', 
+                  fontSize: '0.75rem', 
+                  height: '28px', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '4px',
+                  color: 'var(--primary)',
+                  borderColor: 'rgba(99, 102, 241, 0.3)'
+                }}
+              >
+                <Sparkles size={12} style={{ color: '#eab308' }} />
+                <span>AI Phân Tích</span>
+              </button>
+            )}
 
             {row.status === 'NEW' && (
               <button 
@@ -747,6 +790,15 @@ const IncidentReportsManagement = () => {
                   gap: '8px'
                 }}>
                   <button
+                    type="button"
+                    onClick={() => handleAiAnalysis(selectedReport)}
+                    className="btn btn-secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--primary)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
+                  >
+                    <Sparkles size={14} style={{ color: '#eab308' }} />
+                    <span>AI Phân Tích</span>
+                  </button>
+                  <button
                     onClick={() => handleUpdateStatus(selectedReport.id, 'PROCESSING')}
                     className="btn btn-secondary"
                     style={{ backgroundColor: 'var(--info-light)', color: 'var(--info)', borderColor: 'var(--info)' }}
@@ -766,6 +818,15 @@ const IncidentReportsManagement = () => {
                   gap: '8px'
                 }}>
                   <button
+                    type="button"
+                    onClick={() => handleAiAnalysis(selectedReport)}
+                    className="btn btn-secondary"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--primary)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
+                  >
+                    <Sparkles size={14} style={{ color: '#eab308' }} />
+                    <span>AI Phân Tích</span>
+                  </button>
+                  <button
                     onClick={() => handleUpdateStatus(selectedReport.id, 'RESOLVED')}
                     className="btn btn-primary"
                   >
@@ -777,6 +838,187 @@ const IncidentReportsManagement = () => {
                   >
                     Từ chối
                   </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Analysis Modal */}
+      {isAiModalOpen && selectedReport && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1010,
+          padding: '20px'
+        }} className="saas-fade-in">
+          <div style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            width: '100%',
+            maxWidth: '650px',
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '90vh',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={16} style={{ color: '#eab308' }} />
+                <span>Trợ Lý Giám Định Bảo Hiểm AI</span>
+              </h3>
+              <button 
+                onClick={() => {
+                  setIsAiModalOpen(false);
+                  setAiAnalysis(null);
+                }}
+                className="btn btn-secondary"
+                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+              >
+                Đóng
+              </button>
+            </div>
+
+            <div style={{ padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {aiLoading ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '200px', gap: '12px' }}>
+                  <RefreshCw className="animate-spin" size={32} style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>AI đang tiến hành phân đối soát điều khoản hợp đồng...</span>
+                </div>
+              ) : aiAnalysis ? (
+                <>
+                  <div style={{
+                    backgroundColor: aiAnalysis.recommendation === 'APPROVE' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid ' + (aiAnalysis.recommendation === 'APPROVE' ? 'var(--success)' : 'var(--danger)'),
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}>
+                    <strong style={{ 
+                      fontSize: '0.95rem', 
+                      color: aiAnalysis.recommendation === 'APPROVE' ? 'var(--success)' : 'var(--danger)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}>
+                      Khuyến Nghị Đề Xuất: {aiAnalysis.recommendation === 'APPROVE' ? 'DUYỆT CHI TRẢ' : 'TỪ CHỐI BỒI THƯỜNG'}
+                    </strong>
+                    <p style={{ fontSize: '0.85rem', margin: 0, color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      {aiAnalysis.summary}
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: '600', margin: 0 }}>Checklist Đối Soát Tự Động:</h4>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: '600', minWidth: '130px' }}>1. Thời hạn hợp đồng:</span>
+                        <span>{aiAnalysis.dateCheck}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: '600', minWidth: '130px' }}>2. Hạn mức chi trả:</span>
+                        <span>{aiAnalysis.amountCheck}</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <span style={{ fontWeight: '600', minWidth: '130px' }}>3. Phạm vi bảo vệ:</span>
+                        <span>{aiAnalysis.validityCheck}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {aiAnalysis.suggestedReason && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <h4 style={{ fontSize: '0.875rem', fontWeight: '600', margin: 0 }}>Ý Kiến Phản Hồi Gợi Ý Cho Khách Hàng:</h4>
+                      <textarea
+                        className="form-input"
+                        rows={4}
+                        readOnly
+                        value={aiAnalysis.suggestedReason}
+                        style={{ fontSize: '0.85rem', backgroundColor: 'var(--background)', cursor: 'text' }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ 
+                    borderTop: '1px solid var(--border)', 
+                    paddingTop: '16px', 
+                    marginTop: '8px', 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    gap: '12px' 
+                  }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => {
+                        setIsAiModalOpen(false);
+                        setAiAnalysis(null);
+                      }}
+                    >
+                      Bỏ qua
+                    </button>
+
+                    {selectedReport.status === 'PROCESSING' && (
+                      <>
+                        {aiAnalysis.recommendation === 'APPROVE' ? (
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={() => {
+                              setIsAiModalOpen(false);
+                              setAiAnalysis(null);
+                              setConfirmAction({
+                                reportId: selectedReport.id,
+                                status: 'RESOLVED',
+                                title: 'Duyệt chi trả theo đề xuất AI',
+                                message: `Duyệt chi trả số tiền ${formatCurrency(selectedReport.claimAmount)} dựa trên đối soát hợp lệ của AI?`
+                              });
+                            }}
+                          >
+                            Áp Dụng Duyệt Chi
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            onClick={() => {
+                              setIsAiModalOpen(false);
+                              setSelectedReport(selectedReport);
+                              setRejectReason(aiAnalysis.suggestedReason || 'Không đáp ứng điều khoản bảo hiểm.');
+                              setIsRejectOpen(true);
+                              setAiAnalysis(null);
+                            }}
+                          >
+                            Áp Dụng Từ Chối
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                  Không có dữ liệu phân tích.
                 </div>
               )}
             </div>
