@@ -44,7 +44,7 @@ Hệ thống được vận hành khép kín qua 3 vai trò chính:
 
 ```mermaid
 graph TD
-    subgraph 1. Khách Hàng (Customer)
+    subgraph "1. Khách Hàng (Customer)"
         C1[Đăng ký/Đăng nhập Google/Facebook] --> C2[Xem & Đăng ký gói Bảo hiểm]
         C2 --> C3[Hỏi đáp Trợ lý ảo AI - Tra cứu chính sách]
         C3 --> C4[Đặt lịch hẹn tư vấn với Chuyên viên]
@@ -52,14 +52,14 @@ graph TD
         C5 --> C6[Chat thời gian thực WebSocket]
     end
     
-    subgraph 2. Nhân Viên Tư Vấn (Employee)
+    subgraph "2. Nhân Viên Tư Vấn (Employee)"
         E1[Dashboard & Khách hàng phụ trách] --> E2[Phê duyệt hồ sơ bảo hiểm PENDING]
         E2 --> E3[Xử lý sự cố bồi thường]
         E3 --> E4[Chat hỗ trợ Seen/Emoji/Sửa/Thu hồi]
         E4 --> E5[Xuất báo cáo dữ liệu Excel]
     end
     
-    subgraph 3. Quản Trị Viên (Admin)
+    subgraph "3. Quản Trị Viên (Admin)"
         A1[Dashboard toàn hệ thống & Biểu đồ doanh thu] --> A2[Quản lý Tài khoản & Phân quyền]
         A2 --> A3[Quản lý danh mục gói Bảo hiểm]
         A3 --> A4[Tải lên PDF/TXT huấn luyện RAG AI]
