@@ -36,6 +36,7 @@ import LiveSupportChat from './pages/customer/LiveSupportChat';
 import EmployeeSupportChat from './pages/employee/EmployeeSupportChat';
 import EmployeeAiAssistant from './pages/employee/EmployeeAiAssistant';
 import Profile from './pages/Profile';
+import OAuth2CallbackPage from './pages/OAuth2CallbackPage';
 
 
 // Helper redirect component for root "/"
@@ -84,6 +85,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/oauth2/callback/:provider" element={<OAuth2CallbackPage />} />
 
             {/* Root Redirect */}
             <Route path="/" element={<HomeRedirect />} />

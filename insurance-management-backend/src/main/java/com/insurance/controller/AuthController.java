@@ -27,11 +27,37 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    @Value("${oauth2.google.client-id}")
+    private String googleClientId;
+
+    @Value("${oauth2.google.client-secret}")
+    private String googleClientSecret;
+
+    @Value("${oauth2.google.redirect-uri}")
+    private String googleRedirectUri;
+
+    @Value("${oauth2.facebook.client-id}")
+    private String facebookClientId;
+
+    @Value("${oauth2.facebook.client-secret}")
+    private String facebookClientSecret;
+
+    @Value("${oauth2.facebook.redirect-uri}")
+    private String facebookRedirectUri;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -293,5 +319,172 @@ public class AuthController {
         systemLogService.log("Đặt lại mật khẩu thành công bằng token/OTP", user.getEmail(), user.getRole().getName().toString(), "SUCCESS");
 
         return ResponseEntity.ok(new MessageResponse("Đặt lại mật khẩu thành công!"));
+    }
+
+    @PostMapping("/oauth2/callback/google")
+    public ResponseEntity<?> googleCallback(@RequestBody java.util.Map<String, String> request) {
+        String code = request.get("code");
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không tìm thấy mã code xác thực Google!"));
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            
+            // 1. Exchange code for Google Access Token
+            String tokenUrl = "https://oauth2.googleapis.com/token";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("code", code);
+            params.add("client_id", googleClientId);
+            params.add("client_secret", googleClientSecret);
+            params.add("redirect_uri", googleRedirectUri);
+            params.add("grant_type", "authorization_code");
+
+            HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(params, headers);
+            
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<java.util.Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, java.util.Map.class);
+            
+            if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không thể lấy token từ Google!"));
+            }
+
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+            // 2. Get User Info from Google
+            String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+            HttpHeaders userInfoHeaders = new HttpHeaders();
+            userInfoHeaders.setBearerAuth(accessToken);
+            HttpEntity<Void> userInfoRequest = new HttpEntity<>(userInfoHeaders);
+
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<java.util.Map> userInfoResponse = restTemplate.exchange(
+                    userInfoUrl, HttpMethod.GET, userInfoRequest, java.util.Map.class);
+
+            if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không thể lấy thông tin người dùng từ Google!"));
+            }
+
+            java.util.Map<?, ?> googleUser = userInfoResponse.getBody();
+            String email = (String) googleUser.get("email");
+            String name = (String) googleUser.get("name");
+
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không thể lấy Email từ tài khoản Google của bạn!"));
+            }
+
+            return handleSocialLogin(email, name, "Google");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi xác thực Google: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/oauth2/callback/facebook")
+    public ResponseEntity<?> facebookCallback(@RequestBody java.util.Map<String, String> request) {
+        String code = request.get("code");
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không tìm thấy mã code xác thực Facebook!"));
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            
+            // 1. Exchange code for Facebook Access Token
+            String tokenUrl = String.format(
+                "https://graph.facebook.com/v12.0/oauth/access_token?client_id=%s&redirect_uri=%s&client_secret=%s&code=%s",
+                facebookClientId, facebookRedirectUri, facebookClientSecret, code
+            );
+
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<java.util.Map> tokenResponse = restTemplate.getForEntity(tokenUrl, java.util.Map.class);
+            
+            if (!tokenResponse.getStatusCode().is2xxSuccessful() || tokenResponse.getBody() == null) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không thể lấy token từ Facebook!"));
+            }
+
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+            // 2. Get User Info from Facebook Graph API
+            String userInfoUrl = String.format(
+                "https://graph.facebook.com/me?fields=id,name,email&access_token=%s",
+                accessToken
+            );
+
+            @SuppressWarnings("rawtypes")
+            ResponseEntity<java.util.Map> userInfoResponse = restTemplate.getForEntity(userInfoUrl, java.util.Map.class);
+
+            if (!userInfoResponse.getStatusCode().is2xxSuccessful() || userInfoResponse.getBody() == null) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Không thể lấy thông tin người dùng từ Facebook!"));
+            }
+
+            java.util.Map<?, ?> facebookUser = userInfoResponse.getBody();
+            String email = (String) facebookUser.get("email");
+            String name = (String) facebookUser.get("name");
+
+            if (email == null || email.trim().isEmpty()) {
+                String id = (String) facebookUser.get("id");
+                if (id != null) {
+                    email = id + "@facebook.com";
+                } else {
+                    return ResponseEntity.badRequest().body(new MessageResponse("Lỗi: Tài khoản Facebook của bạn không công khai Email!"));
+                }
+            }
+
+            return handleSocialLogin(email, name, "Facebook");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Lỗi xác thực Facebook: " + e.getMessage()));
+        }
+    }
+
+    private ResponseEntity<?> handleSocialLogin(String email, String name, String provider) {
+        java.util.Optional<User> userOptional = userRepository.findByEmail(email);
+        User user;
+
+        if (userOptional.isPresent()) {
+            user = userOptional.get();
+            if ("INACTIVE".equalsIgnoreCase(user.getStatus())) {
+                systemLogService.log("Đăng nhập " + provider + " thất bại: Tài khoản bị ngưng hoạt động", email, "UNKNOWN", "WARNING");
+                return ResponseEntity.badRequest().body(new MessageResponse("Tài khoản của bạn đã bị ngưng hoạt động!"));
+            }
+        } else {
+            user = new User();
+            user.setEmail(email);
+            user.setPassword(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+            user.setStatus("ACTIVE");
+
+            Role userRole = roleRepository.findByName(ERole.ROLE_CUSTOMER)
+                    .orElseThrow(() -> new RuntimeException("Vai trò ROLE_CUSTOMER không tồn tại trên hệ thống."));
+            user.setRole(userRole);
+            user = userRepository.save(user);
+
+            Customer customer = new Customer();
+            customer.setCustomerCode("CUS-" + (System.currentTimeMillis() % 1000000));
+            customer.setFullName(name != null && !name.trim().isEmpty() ? name : "Khách Hàng Mới (" + provider + ")");
+            customer.setUser(user);
+            customerRepository.save(customer);
+
+            systemLogService.log("Đăng ký tài khoản mới qua " + provider + ": " + email, email, "ROLE_CUSTOMER", "SUCCESS");
+        }
+
+        UserDetailsImpl userDetails = UserDetailsImpl.build(user);
+
+        UsernamePasswordAuthenticationToken authentication = 
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtTokenProvider.generateJwtToken(authentication);
+
+        String role = user.getRole().getName().toString();
+        systemLogService.log("Đăng nhập hệ thống thành công qua " + provider, email, role, "SUCCESS");
+
+        return ResponseEntity.ok(new JwtResponseDto(jwt,
+                 user.getId(),
+                 user.getEmail(),
+                 role));
     }
 }

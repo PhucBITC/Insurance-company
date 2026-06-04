@@ -140,6 +140,24 @@ const LoginPage = () => {
     }
   };
 
+  const handleGoogleLogin = (e) => {
+    e.preventDefault();
+    const clientId = '70485409945-oq1crmic401mt3fccib41ogrv141q1ta.apps.googleusercontent.com';
+    const redirectUri = window.location.origin + '/oauth2/callback/google';
+    const scope = 'email profile openid';
+    const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+    window.location.href = url;
+  };
+
+  const handleFacebookLogin = (e) => {
+    e.preventDefault();
+    const clientId = '768028193010523';
+    const redirectUri = window.location.origin + '/oauth2/callback/facebook';
+    const scope = 'email,public_profile';
+    const url = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code`;
+    window.location.href = url;
+  };
+
   const googleIcon = (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -155,11 +173,6 @@ const LoginPage = () => {
     </svg>
   );
 
-  const linkedinIcon = (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="#0A66C2" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-    </svg>
-  );
 
   return (
     <div className="auth-page-wrapper">
@@ -170,9 +183,8 @@ const LoginPage = () => {
           <form onSubmit={handleRegisterSubmit}>
             <h1>Tạo tài khoản</h1>
             <div className="social-container">
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{facebookIcon}</a>
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{googleIcon}</a>
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{linkedinIcon}</a>
+              <a href="#" className="social" onClick={handleFacebookLogin} title="Đăng ký bằng Facebook">{facebookIcon}</a>
+              <a href="#" className="social" onClick={handleGoogleLogin} title="Đăng ký bằng Google">{googleIcon}</a>
             </div>
             <span>hoặc sử dụng email để đăng ký</span>
             
@@ -281,9 +293,8 @@ const LoginPage = () => {
           <form onSubmit={handleLoginSubmit}>
             <h1>Đăng nhập</h1>
             <div className="social-container">
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{facebookIcon}</a>
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{googleIcon}</a>
-              <a href="#" className="social" onClick={(e) => e.preventDefault()}>{linkedinIcon}</a>
+              <a href="#" className="social" onClick={handleFacebookLogin} title="Đăng nhập bằng Facebook">{facebookIcon}</a>
+              <a href="#" className="social" onClick={handleGoogleLogin} title="Đăng nhập bằng Google">{googleIcon}</a>
             </div>
             <span>hoặc sử dụng tài khoản của bạn</span>
 
