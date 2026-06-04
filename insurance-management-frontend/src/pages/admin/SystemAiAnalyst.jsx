@@ -12,8 +12,10 @@ import {
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import apiClient from '../../api/apiClient';
+import { useUI } from '../../context/UIContext';
 
 const SystemAiAnalyst = () => {
+  const { showConfirm } = useUI();
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('admin_ai_messages');
     if (saved) {
@@ -113,8 +115,8 @@ const SystemAiAnalyst = () => {
     }
   };
 
-  const clearChat = () => {
-    if (window.confirm('Bạn có muốn xóa lịch sử phân tích AI này không?')) {
+  const clearChat = async () => {
+    if (await showConfirm('Bạn có muốn xóa lịch sử phân tích AI này không?')) {
       const initialMsg = [
         {
           id: 'welcome',

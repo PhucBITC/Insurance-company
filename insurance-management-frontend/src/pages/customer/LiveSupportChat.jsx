@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, MessageSquare, AlertCircle, RefreshCw, Phone, Mail } from 'lucide-react';
+import { Send, User, MessageSquare, AlertCircle, RefreshCw, Phone, Mail, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
 import { useUI } from '../../context/UIContext';
 
 const LiveSupportChat = () => {
-  const { language } = useUI();
+  const { language, showConfirm } = useUI();
   
   // State
   const [contact, setContact] = useState(null);
@@ -125,6 +125,9 @@ const LiveSupportChat = () => {
             }
             return m;
           }));
+        } else if (msg.type === 'DELETE_HISTORY') {
+          // If the history with the current contact is deleted, clear local messages
+          setMessages([]);
         } else if (msg.senderId === targetUserId) {
           setMessages(prev => [...prev, {
             id: msg.id,
@@ -198,6 +201,21 @@ const LiveSupportChat = () => {
     
     setMessages(prev => [...prev, tempMsg]);
     setInput('');
+  };
+
+  const handleDeleteHistory = async () => {
+    if (!contact || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+    
+    if (await showConfirm(language === 'vi' 
+      ? 'Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện này không? Thao tác này không thể hoàn tác!' 
+      : 'Are you sure you want to delete all chat history with this consultant? This action cannot be undone!')) {
+      
+      socketRef.current.send(JSON.stringify({
+        type: 'DELETE_HISTORY',
+        recipientId: contact.userId
+      }));
+      setMessages([]);
+    }
   };
 
   const handleRecall = (msg) => {
@@ -539,8 +557,8 @@ const LiveSupportChat = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    if (window.confirm(language === 'vi' ? 'Bạn có chắc chắn muốn thu hồi tin nhắn này?' : 'Are you sure you want to recall this message?')) {
+                                  onClick={async () => {
+                                    if (await showConfirm(language === 'vi' ? 'Bạn có chắc chắn muốn thu hồi tin nhắn này?' : 'Are you sure you want to recall this message?')) {
                                       handleRecall(msg);
                                     }
                                   }}
@@ -626,6 +644,26 @@ const LiveSupportChat = () => {
                 </div>
               </div>
             </div>
+
+            <button
+              onClick={handleDeleteHistory}
+              className="btn btn-secondary"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                color: 'var(--danger)',
+                borderColor: 'rgba(239, 68, 68, 0.2)',
+                fontSize: '0.85rem',
+                height: '36px',
+                marginTop: '10px'
+              }}
+            >
+              <Trash2 size={14} />
+              {language === 'vi' ? 'Xóa lịch sử trò chuyện' : 'Delete Chat History'}
+            </button>
           </div>
         </div>
       ) : (

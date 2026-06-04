@@ -22,4 +22,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.sender.id = :senderId AND m.recipient.id = :recipientId AND m.isRead = false")
     long countUnreadMessages(@Param("senderId") Long senderId, @Param("recipientId") Long recipientId);
+
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM ChatMessage m WHERE (m.sender.id = :u1 AND m.recipient.id = :u2) OR (m.sender.id = :u2 AND m.recipient.id = :u1)")
+    void deleteChatHistory(@Param("u1") Long u1, @Param("u2") Long u2);
 }

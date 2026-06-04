@@ -15,7 +15,7 @@ import PageHeader from '../../components/PageHeader';
 import { useUI } from '../../context/UIContext';
 
 const WikiManagement = () => {
-  const { language } = useUI();
+  const { language, showConfirm } = useUI();
   
   // State
   const [documents, setDocuments] = useState([]);
@@ -97,7 +97,7 @@ const WikiManagement = () => {
   };
 
   const handleDelete = async (id, fileName) => {
-    const confirmDelete = window.confirm(
+    const confirmDelete = await showConfirm(
       language === 'vi' 
         ? `Bạn có chắc chắn muốn xóa tài liệu "${fileName}" không?` 
         : `Are you sure you want to delete document "${fileName}"?`

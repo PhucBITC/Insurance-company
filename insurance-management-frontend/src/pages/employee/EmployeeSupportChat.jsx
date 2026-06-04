@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, MessageSquare, AlertCircle, RefreshCw, Search, Sparkles } from 'lucide-react';
+import { Send, User, MessageSquare, AlertCircle, RefreshCw, Search, Trash2 } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import PageHeader from '../../components/PageHeader';
 import { useUI } from '../../context/UIContext';
 
 const EmployeeSupportChat = () => {
-  const { language } = useUI();
+  const { language, showConfirm } = useUI();
   
   // State
   const [contacts, setContacts] = useState([]);
@@ -21,7 +21,7 @@ const EmployeeSupportChat = () => {
   const [activeDropdownId, setActiveDropdownId] = useState(null);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editingContent, setEditingContent] = useState('');
-  const [aiSuggestLoading, setAiSuggestLoading] = useState(false);
+
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -95,24 +95,7 @@ const EmployeeSupportChat = () => {
     }
   };
 
-  // AI reply suggestion trigger
-  const handleAiSuggestReply = async () => {
-    if (!selectedContact) return;
-    setAiSuggestLoading(true);
-    try {
-      const res = await apiClient.post('/api/employee/ai/suggest-reply', {
-        contactId: selectedContact.userId
-      });
-      if (res.data && res.data.suggestion) {
-        setInput(res.data.suggestion);
-      }
-    } catch (err) {
-      console.error(err);
-      alert(language === 'vi' ? 'Không thể lấy gợi ý phản hồi AI lúc này.' : 'Failed to fetch AI reply suggestion.');
-    } finally {
-      setAiSuggestLoading(false);
-    }
-  };
+
 
   // 3. Connect WebSocket for receiving messages from any customer
   const connectWebSocket = () => {
@@ -180,6 +163,10 @@ const EmployeeSupportChat = () => {
               }
               return m;
             }));
+          }
+        } else if (msg.type === 'DELETE_HISTORY') {
+          if (activeContact && msg.contactId === activeContact.userId) {
+            setMessages([]);
           }
         } else if (msg.type === 'REACT') {
           if (activeContact && msg.senderId === activeContact.userId) {
@@ -271,6 +258,21 @@ const EmployeeSupportChat = () => {
     
     setMessages(prev => [...prev, tempMsg]);
     setInput('');
+  };
+
+  const handleDeleteHistory = async () => {
+    if (!selectedContact || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+
+    if (await showConfirm(language === 'vi' 
+      ? 'Bạn có chắc chắn muốn xóa toàn bộ lịch sử cuộc trò chuyện với khách hàng này không? Thao tác này không thể hoàn tác!' 
+      : 'Are you sure you want to delete all chat history with this customer? This action cannot be undone!')) {
+
+      socketRef.current.send(JSON.stringify({
+        type: 'DELETE_HISTORY',
+        recipientId: selectedContact.userId
+      }));
+      setMessages([]);
+    }
   };
 
   const handleRecall = (msg) => {
@@ -444,6 +446,26 @@ const EmployeeSupportChat = () => {
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={handleDeleteHistory}
+                    className="btn btn-secondary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      color: 'var(--danger)',
+                      borderColor: 'rgba(239, 68, 68, 0.2)',
+                      fontSize: '0.8rem',
+                      height: '32px',
+                      padding: '0 12px',
+                      cursor: 'pointer'
+                    }}
+                    title={language === 'vi' ? 'Xóa lịch sử cuộc trò chuyện' : 'Delete Chat History'}
+                  >
+                    <Trash2 size={13} />
+                    {language === 'vi' ? 'Xóa lịch sử' : 'Delete History'}
+                  </button>
                 </div>
 
                 {/* Messages Body */}
@@ -683,8 +705,8 @@ const EmployeeSupportChat = () => {
                                       </button>
                                       <button
                                         type="button"
-                                        onClick={() => {
-                                          if (window.confirm(language === 'vi' ? 'Bạn có chắc chắn muốn thu hồi tin nhắn này?' : 'Are you sure you want to recall this message?')) {
+                                        onClick={async () => {
+                                          if (await showConfirm(language === 'vi' ? 'Bạn có chắc chắn muốn thu hồi tin nhắn này?' : 'Are you sure you want to recall this message?')) {
                                             handleRecall(msg);
                                           }
                                         }}
@@ -727,29 +749,7 @@ const EmployeeSupportChat = () => {
                     style={{ flexGrow: 1, height: '40px', padding: '0 16px', borderRadius: '20px', border: '1px solid var(--glass-border)', outline: 'none', backgroundColor: 'var(--card)', color: 'var(--text-main)' }}
                     disabled={!connected}
                   />
-                  <button 
-                    type="button"
-                    onClick={handleAiSuggestReply}
-                    className="btn btn-secondary"
-                    style={{ 
-                      borderRadius: '50%', 
-                      width: '40px', 
-                      height: '40px', 
-                      padding: 0, 
-                      minWidth: 'auto', 
-                      justifyContent: 'center',
-                      borderColor: 'rgba(99, 102, 241, 0.3)',
-                      color: 'var(--primary)'
-                    }}
-                    title={language === 'vi' ? 'AI Gợi ý phản hồi' : 'AI Suggest Reply'}
-                    disabled={aiSuggestLoading || !connected}
-                  >
-                    {aiSuggestLoading ? (
-                      <RefreshCw className="animate-spin" size={16} />
-                    ) : (
-                      <Sparkles size={16} style={{ color: '#eab308' }} />
-                    )}
-                  </button>
+
                   <button 
                     type="submit" 
                     className="btn btn-primary" 

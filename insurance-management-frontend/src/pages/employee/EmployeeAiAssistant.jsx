@@ -4,21 +4,19 @@ import {
   Bot, 
   User, 
   Trash2, 
-  HelpCircle, 
   Sparkles, 
-  AlertTriangle,
-  RefreshCw,
-  MessageSquare,
-  ShieldAlert
+  ShieldAlert,
+  RefreshCw
 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import apiClient from '../../api/apiClient';
 import { useUI } from '../../context/UIContext';
 
-const ChatbotAssistant = () => {
-  const { showConfirm } = useUI();
+const EmployeeAiAssistant = () => {
+  const { language, showConfirm } = useUI();
+  
   const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('chatbot_messages');
+    const saved = localStorage.getItem('employee_ai_messages');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -30,7 +28,9 @@ const ChatbotAssistant = () => {
       {
         id: 'welcome',
         sender: 'bot',
-        text: 'Xin chào! Tôi là Trợ lý ảo AI của bảo hiểm Bảo An.\n\nTôi có thể hỗ trợ bạn giải đáp các thắc mắc về điều khoản bảo hiểm, tra cứu hợp đồng đang hoạt động, xem thông tin tư vấn viên riêng hoặc hướng dẫn chi tiết quy trình khai báo sự cố bồi thường.\n\nBạn muốn tìm hiểu thông tin nào hôm nay?',
+        text: language === 'vi' 
+          ? 'Xin chào! Tôi là Trợ lý AI Nghiệp vụ của bảo hiểm Bảo An.\n\nTôi có thể hỗ trợ bạn tra cứu nhanh quy trình xử lý hợp đồng bảo hiểm, điều khoản bồi thường sự cố, chính sách bảo hiểm của các gói sản phẩm và giải đáp các câu hỏi nghiệp vụ dựa trên tài liệu Wiki nội bộ.\n\nBạn cần hỗ trợ giải đáp nghiệp vụ nào hôm nay?'
+          : 'Welcome! I am your Operational AI Assistant at Bao An Insurance.\n\nI can help you quickly look up contract processing guidelines, claim audit policies, product package terms, and answer insurance operations queries based on our internal Wiki documentation.\n\nWhat operational questions do you have today?',
         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         isAiModel: false
       }
@@ -41,21 +41,25 @@ const ChatbotAssistant = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const quickReplies = [
-    "Hợp đồng của tôi có quyền lợi gì?",
-    "Làm sao để tôi khai báo bồi thường sự cố?",
-    "Tư vấn viên hỗ trợ của tôi là ai?",
-    "Giới thiệu các gói bảo hiểm đang mở bán"
+  const quickReplies = language === 'vi' ? [
+    "Quy trình duyệt hợp đồng bảo hiểm",
+    "Quy trình thẩm định bồi thường sự cố",
+    "Tài liệu Wiki nội bộ hướng dẫn những gì?",
+    "Cách tiếp nhận lịch hẹn của khách hàng"
+  ] : [
+    "Insurance contract approval workflow",
+    "Incident claim auditing process",
+    "What guidelines does the Wiki document provide?",
+    "How to manage customer appointments"
   ];
 
-  // Save messages to local storage (limit to last 50 messages to avoid running out of storage space)
+  // Save messages to local storage
   useEffect(() => {
     const welcomeMsg = messages.find(m => m.id === 'welcome');
     let messagesToSave = messages;
     
     if (messages.length > 50) {
       const recentMessages = messages.slice(-50);
-      // Keep welcome message at the beginning if it exists
       if (welcomeMsg && !recentMessages.some(m => m.id === 'welcome')) {
         messagesToSave = [welcomeMsg, ...recentMessages];
       } else {
@@ -63,11 +67,10 @@ const ChatbotAssistant = () => {
       }
     }
     
-    localStorage.setItem('chatbot_messages', JSON.stringify(messagesToSave));
+    localStorage.setItem('employee_ai_messages', JSON.stringify(messagesToSave));
     scrollToBottom();
   }, [messages]);
 
-  // Scroll to bottom helper
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -96,7 +99,7 @@ const ChatbotAssistant = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/api/customer/chatbot/chat', {
+      const response = await apiClient.post('/api/employee/ai/chat', {
         message: text.trim()
       });
 
@@ -104,9 +107,9 @@ const ChatbotAssistant = () => {
       const botMsg = {
         id: 'msg-' + Date.now() + '-bot',
         sender: 'bot',
-        text: response.data.reply || 'Xin lỗi, tôi gặp khó khăn khi phản hồi câu hỏi này.',
+        text: response.data.reply || (language === 'vi' ? 'Xin lỗi, tôi gặp khó khăn khi phản hồi câu hỏi này.' : 'Sorry, I encountered an issue responding to this query.'),
         time: botTime,
-        isAiModel: response.data.isAiModel
+        isAiModel: response.data.isAi
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -116,7 +119,9 @@ const ChatbotAssistant = () => {
       const botMsg = {
         id: 'msg-' + Date.now() + '-bot',
         sender: 'bot',
-        text: 'Rất tiếc, hệ thống đang gặp lỗi kết nối. Vui lòng thử lại sau ít phút!',
+        text: language === 'vi' 
+          ? 'Rất tiếc, hệ thống đang gặp lỗi kết nối. Vui lòng thử lại sau ít phút!' 
+          : 'Sorry, the connection failed. Please try again in a few moments!',
         time: botTime,
         isAiModel: false,
         isError: true
@@ -134,12 +139,14 @@ const ChatbotAssistant = () => {
   };
 
   const clearChat = async () => {
-    if (await showConfirm('Bạn có muốn xóa toàn bộ lịch sử trò chuyện này không?')) {
+    if (await showConfirm(language === 'vi' ? 'Bạn có muốn xóa toàn bộ lịch sử trò chuyện này không?' : 'Do you want to clear all chat history?')) {
       const initialMsg = [
         {
           id: 'welcome',
           sender: 'bot',
-          text: 'Xin chào! Tôi là Trợ lý ảo AI của bảo hiểm Bảo An.\n\nTôi có thể hỗ trợ bạn giải đáp các thắc mắc về điều khoản bảo hiểm, tra cứu hợp đồng đang hoạt động, xem thông tin tư vấn viên riêng hoặc hướng dẫn chi tiết quy trình khai báo sự cố bồi thường.\n\nBạn muốn tìm hiểu thông tin nào hôm nay?',
+          text: language === 'vi'
+            ? 'Xin chào! Tôi là Trợ lý AI Nghiệp vụ của bảo hiểm Bảo An.\n\nTôi có thể hỗ trợ bạn tra cứu nhanh quy trình xử lý hợp đồng bảo hiểm, điều khoản bồi thường sự cố, chính sách bảo hiểm của các gói sản phẩm và giải đáp các câu hỏi nghiệp vụ dựa trên tài liệu Wiki nội bộ.\n\nBạn cần hỗ trợ giải đáp nghiệp vụ nào hôm nay?'
+            : 'Welcome! I am your Operational AI Assistant at Bao An Insurance.\n\nI can help you quickly look up contract processing guidelines, claim audit policies, product package terms, and answer insurance operations queries based on our internal Wiki documentation.\n\nWhat operational questions do you have today?',
           time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
           isAiModel: false
         }
@@ -210,7 +217,7 @@ const ChatbotAssistant = () => {
       style={{ height: '38px', gap: '6px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
     >
       <Trash2 size={14} />
-      Xóa hội thoại
+      {language === 'vi' ? 'Xóa hội thoại' : 'Clear Chat'}
     </button>
   );
 
@@ -219,8 +226,10 @@ const ChatbotAssistant = () => {
       
       {/* Page Header */}
       <PageHeader 
-        title="Trợ Lý Ảo AI Chatbot" 
-        description="Đặt câu hỏi tự do về chính sách bảo hiểm, hướng dẫn tạo yêu cầu bồi thường và tra cứu hợp đồng đang hoạt động."
+        title={language === 'vi' ? "Trợ lý AI nghiệp vụ" : "Operational AI Assistant"} 
+        description={language === 'vi' 
+          ? "Giải đáp mọi vấn đề nghiệp vụ bảo hiểm, đối soát hồ sơ và quy trình phê duyệt khách hàng."
+          : "Get instant answers on insurance processing guidelines, claims auditing, and customer workflows."}
         actions={actionButtons}
       />
 
@@ -346,7 +355,7 @@ const ChatbotAssistant = () => {
                         color: msg.isAiModel ? 'var(--primary)' : 'var(--text-muted)',
                         fontWeight: msg.isAiModel ? '600' : 'normal'
                       }}>
-                        {msg.isAiModel ? '• Trực tuyến Llama' : '• Trích xuất Offline'}
+                        {msg.isAiModel ? (language === 'vi' ? '• Trực tuyến Llama' : '• Llama Online') : (language === 'vi' ? '• Trích xuất Offline' : '• Offline Retrieval')}
                       </span>
                     )}
                   </div>
@@ -463,7 +472,7 @@ const ChatbotAssistant = () => {
           <input
             type="text"
             className="form-input"
-            placeholder="Nhập câu hỏi của bạn tại đây..."
+            placeholder={language === 'vi' ? "Nhập câu hỏi nghiệp vụ của bạn..." : "Ask operational question here..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -507,4 +516,4 @@ const ChatbotAssistant = () => {
   );
 };
 
-export default ChatbotAssistant;
+export default EmployeeAiAssistant;

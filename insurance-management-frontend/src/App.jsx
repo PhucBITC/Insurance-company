@@ -34,6 +34,8 @@ import VerifyEmail from './pages/VerifyEmail';
 import WikiManagement from './pages/admin/WikiManagement';
 import LiveSupportChat from './pages/customer/LiveSupportChat';
 import EmployeeSupportChat from './pages/employee/EmployeeSupportChat';
+import EmployeeAiAssistant from './pages/employee/EmployeeAiAssistant';
+import Profile from './pages/Profile';
 
 
 // Helper redirect component for root "/"
@@ -102,6 +104,7 @@ function App() {
               <Route path="wiki" element={<WikiManagement />} />
               <Route path="appointments" element={<AppointmentsManagement />} />
               <Route path="ai-analyst" element={<SystemAiAnalyst />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* Employee Protected Routes */}
@@ -116,6 +119,8 @@ function App() {
               <Route path="incidents" element={<IncidentReportsManagement />} />
               <Route path="appointments" element={<AppointmentsManagement />} />
               <Route path="chat" element={<EmployeeSupportChat />} />
+              <Route path="ai-assistant" element={<EmployeeAiAssistant />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* Customer Protected Routes */}
@@ -131,6 +136,7 @@ function App() {
               <Route path="chatbot" element={<ChatbotAssistant />} />
               <Route path="appointments" element={<Appointments />} />
               <Route path="chat" element={<LiveSupportChat />} />
+              <Route path="profile" element={<Profile />} />
             </Route>
 
             {/* Fallback to Root */}

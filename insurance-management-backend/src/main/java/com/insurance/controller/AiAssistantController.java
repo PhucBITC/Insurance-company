@@ -522,4 +522,75 @@ public class AiAssistantController {
 
         return "Chào anh/chị " + customer.getFullName() + "! Em là nhân viên hỗ trợ của bảo hiểm Bảo An. Em có thể hỗ trợ giải đáp thắc mắc hoặc tư vấn dịch vụ gì cho anh/chị ngày hôm nay ạ?";
     }
+
+    // ==========================================
+    // 4. EMPLOYEE OPERATIONAL AI CHAT ENDPOINT
+    // ==========================================
+    @PostMapping("/employee/ai/chat")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<?> employeeChat(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody Map<String, String> request) {
+        
+        try {
+            String message = request.get("message");
+            if (message == null || message.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageResponse("Nội dung tin nhắn không được để trống!"));
+            }
+
+            // Keyword match Wiki document contexts (RAG)
+            String wikiContext = getWikiContext(message);
+
+            // Check if Groq config is available
+            if (apiKey == null || apiKey.trim().isEmpty() || apiKey.startsWith("${") || apiKey.contains("your_")) {
+                String fallback = getEmployeeChatFallbackResponse(message, wikiContext);
+                return ResponseEntity.ok(Map.of("reply", fallback, "isAi", false));
+            }
+
+            // Build prompt
+            StringBuilder systemPrompt = new StringBuilder();
+            systemPrompt.append("Bạn là trợ lý AI chuyên nghiệp hỗ trợ nghiệp vụ cho nhân viên của công ty bảo hiểm Bảo An.\n");
+            systemPrompt.append("Bạn có nhiệm vụ giải đáp các thắc mắc của nhân viên về quy trình nghiệp vụ, sản phẩm bảo hiểm, điều khoản, dựa trên tài liệu Wiki nội bộ dưới đây.\n\n");
+            
+            if (!wikiContext.isEmpty()) {
+                systemPrompt.append("--- TÀI LIỆU WIKI NỘI BỘ (RAG) ---\n");
+                systemPrompt.append(wikiContext).append("\n");
+            } else {
+                systemPrompt.append("LƯU Ý: Không tìm thấy tài liệu Wiki nội bộ nào trực tiếp trùng khớp với từ khóa câu hỏi của nhân viên. Hãy hướng dẫn họ dựa trên các quy trình bảo hiểm cơ bản (Ví dụ: quy trình bồi thường sự cố, lịch hẹn tư vấn, duyệt hợp đồng) hoặc khuyên họ cập nhật thêm tài liệu trong trang quản lý tài liệu.\n\n");
+            }
+
+            systemPrompt.append("Hãy trả lời câu hỏi của nhân viên một cách chính xác, chuyên nghiệp bằng tiếng Việt. Định dạng markdown đẹp mắt.");
+
+            String aiReply = callGroqApi(systemPrompt.toString(), message);
+            return ResponseEntity.ok(Map.of("reply", aiReply, "isAi", true));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Lỗi hệ thống khi xử lý AI chat: " + e.getMessage()));
+        }
+    }
+
+    private String getEmployeeChatFallbackResponse(String message, String wikiContext) {
+        if (!wikiContext.isEmpty()) {
+            return "*(Chế độ ngoại tuyến - Trích xuất Wiki)*\n\nDựa trên tài liệu chính sách hướng dẫn nghiệp vụ nội bộ, tôi xin cung cấp thông tin liên quan đến câu hỏi của bạn như sau:\n\n" + wikiContext;
+        }
+        
+        String lower = message.toLowerCase();
+        if (lower.contains("bồi thường") || lower.contains("sự cố")) {
+            return "*(Chế độ ngoại tuyến)*\n\n**Hướng dẫn quy trình bồi thường sự cố cho nhân viên:**\n" +
+                    "1. Khách hàng gửi yêu cầu khai báo sự cố qua tài khoản của họ kèm hóa đơn/biên bản.\n" +
+                    "2. Yêu cầu sự cố sẽ tự động hiển thị trong trang **Sự Cố Bảo Hiểm** của nhân viên được phân phụ trách chăm sóc.\n" +
+                    "3. Nhân viên kiểm tra tính hợp lệ của hồ sơ, click **Tiếp nhận** để chuyển sang trạng thái đang xử lý.\n" +
+                    "4. Sau khi đối soát, click **Duyệt chi** (nếu hợp lệ) hoặc click **Từ chối** (và nhập lý do để gửi tới khách hàng).";
+        }
+        
+        if (lower.contains("duyệt hợp đồng") || lower.contains("kích hoạt")) {
+            return "*(Chế độ ngoại tuyến)*\n\n**Hướng dẫn quy trình duyệt gói đăng ký:**\n" +
+                    "1. Khi khách hàng bấm đăng ký mua gói bảo hiểm trực tuyến, hợp đồng sẽ ở trạng thái **PENDING**.\n" +
+                    "2. Đăng ký hiển thị trong trang **Duyệt yêu cầu gói** của cả Admin và Nhân viên phụ trách.\n" +
+                    "3. Nhân viên liên hệ xác minh thông tin, thanh toán phí bảo hiểm, sau đó click **Duyệt hợp đồng** để kích hoạt trạng thái **APPROVED** cho gói bảo hiểm, bắt đầu tính thời hạn hiệu lực.";
+        }
+
+        return "*(Chế độ ngoại tuyến)*\n\nChào bạn, tôi là Trợ lý AI hỗ trợ nghiệp vụ Bảo An.\n\nHệ thống hiện tại đang ngoại tuyến nên không thể sử dụng mô hình ngôn ngữ lớn để trả lời chi tiết câu hỏi này. Bạn có thể hỏi về các chủ đề nghiệp vụ nội bộ như: `quy trình bồi thường sự cố`, `quy trình duyệt hợp đồng`, hoặc kiểm tra tài liệu Wiki.";
+    }
 }

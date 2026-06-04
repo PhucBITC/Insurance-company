@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Sun, Moon, User, Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Menu, LogOut, Sun, Moon, User, Bell, Globe } from 'lucide-react';
 import { useUI } from '../context/UIContext';
 import apiClient from '../api/apiClient';
 
 const Topbar = ({ toggleSidebar, user, onLogout }) => {
+  const navigate = useNavigate();
   const { theme, toggleTheme, language, setLanguage, t } = useUI();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -186,7 +188,7 @@ const Topbar = ({ toggleSidebar, user, onLogout }) => {
             alignItems: 'center',
             justifyContent: 'center',
             gap: '6px',
-            padding: '0 8px',
+            padding: '0 10px',
             height: '36px',
             borderRadius: 'var(--radius-sm)',
             transition: 'var(--transition-fast)',
@@ -198,9 +200,7 @@ const Topbar = ({ toggleSidebar, user, onLogout }) => {
           onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--card)'}
           title={language === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'}
         >
-          <span style={{ fontSize: '1rem', display: 'flex', alignItems: 'center' }}>
-            {language === 'vi' ? '🇻🇳' : '🇬🇧'}
-          </span>
+          <Globe size={15} style={{ color: 'var(--text-muted)' }} />
           <span>
             {language === 'vi' ? 'VI' : 'EN'}
           </span>
@@ -464,7 +464,13 @@ const Topbar = ({ toggleSidebar, user, onLogout }) => {
               <button 
                 onClick={() => {
                   setIsDropdownOpen(false);
-                  alert(language === 'vi' ? 'Chức năng Xem Hồ Sơ đang được phát triển trong Giai đoạn 2!' : 'Profile View feature is under development in Phase 2!');
+                  if (user?.role === 'ROLE_ADMIN') {
+                    navigate('/admin/profile');
+                  } else if (user?.role === 'ROLE_EMPLOYEE') {
+                    navigate('/employee/profile');
+                  } else {
+                    navigate('/customer/profile');
+                  }
                 }}
                 style={{
                   background: 'none',

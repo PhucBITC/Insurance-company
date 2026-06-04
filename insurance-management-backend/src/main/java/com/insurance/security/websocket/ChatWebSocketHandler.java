@@ -32,6 +32,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Autowired
     private ChatMessageRepository chatMessageRepository;
 
+    @Autowired
+    private com.insurance.repository.CustomerRepository customerRepository;
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String query = session.getUri().getQuery();
@@ -62,6 +65,31 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         try {
             Map<String, Object> payload = objectMapper.readValue(message.getPayload(), Map.class);
             String type = payload.getOrDefault("type", "CHAT").toString();
+
+            if ("DELETE_HISTORY".equals(type)) {
+                Long recipientId = Long.valueOf(payload.get("recipientId").toString());
+                chatMessageRepository.deleteChatHistory(senderId, recipientId);
+
+                // Send confirmation to sender
+                if (session.isOpen()) {
+                    Map<String, Object> confirmation = Map.of(
+                        "type", "DELETE_HISTORY",
+                        "contactId", recipientId
+                    );
+                    session.sendMessage(new TextMessage(objectMapper.writeValueAsString(confirmation)));
+                }
+
+                // Notify recipient if online
+                WebSocketSession recipientSession = activeSessions.get(recipientId);
+                if (recipientSession != null && recipientSession.isOpen()) {
+                    Map<String, Object> notification = Map.of(
+                        "type", "DELETE_HISTORY",
+                        "contactId", senderId
+                    );
+                    recipientSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(notification)));
+                }
+                return;
+            }
 
             if ("READ".equals(type)) {
                 Long recipientId = Long.valueOf(payload.get("recipientId").toString());
@@ -208,6 +236,83 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                     System.out.println("[ChatWS] Forwarded message from " + senderId + " to " + recipientId);
                 } else {
                     System.out.println("[ChatWS] Recipient " + recipientId + " is offline. Saved message in DB.");
+                }
+
+                // Auto-reply logic: If Customer sends to Employee, check if we need to auto-reply
+                boolean isCustomerSender = "ROLE_CUSTOMER".equals(sender.getRole().getName().toString());
+                if (isCustomerSender) {
+                    java.util.List<ChatMessage> history = chatMessageRepository.findChatHistory(senderId, recipientId);
+                    boolean shouldAutoReply = false;
+
+                    if (history.size() <= 1) { // Only the message we just saved
+                        shouldAutoReply = true;
+                    } else {
+                        // Find the last message sent by the employee (recipient)
+                        ChatMessage lastEmployeeMsg = null;
+                        for (int i = history.size() - 2; i >= 0; i--) {
+                            if (history.get(i).getSender().getId().equals(recipientId)) {
+                                lastEmployeeMsg = history.get(i);
+                                break;
+                            }
+                        }
+                        if (lastEmployeeMsg == null) {
+                            shouldAutoReply = true;
+                        } else {
+                            // If last employee reply was more than 10 minutes ago, auto-reply again
+                            LocalDateTime tenMinutesAgo = LocalDateTime.now().minusMinutes(10);
+                            if (lastEmployeeMsg.getTimestamp().isBefore(tenMinutesAgo)) {
+                                shouldAutoReply = true;
+                            }
+                        }
+                    }
+
+                    if (shouldAutoReply) {
+                        String customerName = "Khách hàng";
+                        java.util.Optional<com.insurance.entity.Customer> custOpt = customerRepository.findByUserId(senderId);
+                        if (custOpt.isPresent()) {
+                            customerName = custOpt.get().getFullName();
+                        }
+
+                        String autoContent = "Chào anh/chị " + customerName + "! Tôi là trợ lý tự động của bảo hiểm Bảo An.\n\n" +
+                                "Cảm ơn anh/chị đã liên hệ. Để hỗ trợ tốt nhất, xin hỏi anh/chị đang cần hỗ trợ về chủ đề nào dưới đây ạ?\n" +
+                                "1. Thủ tục khai báo sự cố và nhận bồi thường.\n" +
+                                "2. Tra cứu thông tin hợp đồng bảo hiểm của tôi.\n" +
+                                "3. Tham khảo các gói bảo hiểm đang mở bán.\n\n" +
+                                "*(Anh/chị vui lòng để lại mô tả chi tiết, Nhân viên tư vấn phụ trách sẽ trực tiếp vào hỗ trợ anh/chị ngay lập tức!)*";
+
+                        ChatMessage autoMsg = new ChatMessage();
+                        autoMsg.setSender(recipient); // sent from employee
+                        autoMsg.setRecipient(sender); // sent to customer
+                        autoMsg.setContent(autoContent);
+                        autoMsg.setTimestamp(LocalDateTime.now().plusSeconds(1)); // slightly after
+                        autoMsg = chatMessageRepository.save(autoMsg);
+
+                        // Send autoMsg to Customer (sender)
+                        if (session.isOpen()) {
+                            Map<String, Object> autoMsgPayload = Map.of(
+                                "id", autoMsg.getId(),
+                                "senderId", recipientId,
+                                "recipientId", senderId,
+                                "content", autoContent,
+                                "timestamp", autoMsg.getTimestamp().toString(),
+                                "isRead", false
+                            );
+                            session.sendMessage(new TextMessage(objectMapper.writeValueAsString(autoMsgPayload)));
+                        }
+
+                        // Send autoMsg to Employee (recipient) if online
+                        if (recipientSession != null && recipientSession.isOpen()) {
+                            Map<String, Object> autoMsgPayload = Map.of(
+                                "id", autoMsg.getId(),
+                                "senderId", recipientId,
+                                "recipientId", senderId,
+                                "content", autoContent,
+                                "timestamp", autoMsg.getTimestamp().toString(),
+                                "isRead", false
+                            );
+                            recipientSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(autoMsgPayload)));
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
